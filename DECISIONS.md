@@ -124,7 +124,7 @@ Format notes say exactly what shape each answer takes. "Recommended" is a sugges
 - Format: `yes` or `no`.
 - Recommended: `yes`, because adding it later is a migration and costs nothing now. Keys are namespaced by developer.
 
-**B6. Query layer**
+**B6. Query layer** (DECIDED: Drizzle ORM with the stable sync Expo driver, `drizzle-orm/expo-sqlite` and `openDatabaseSync`. Contract tests use `drizzle-orm/better-sqlite3`. Switch to `drizzle-orm/expo-sqlite/async` before phase 3 bulk import if profiling shows UI jank.)
 - Decide: how the code talks to the database.
 - Format: one of `Drizzle`, `Kysely`, or raw SQL with typed helpers.
 - Recommended: Drizzle, since the same schema definition can drive local SQLite and a server Postgres or SQLite. Verify current Expo SQLite driver support before committing.

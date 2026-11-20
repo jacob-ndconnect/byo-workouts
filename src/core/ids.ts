@@ -4,9 +4,17 @@ const HEX = "0123456789abcdef";
  * UUIDv7 (time-ordered). Ids minted in the same millisecond are not ordered
  * against each other; a later millisecond always sorts after an earlier one.
  */
+function fillRandom(bytes: Uint8Array): void {
+  const webCrypto = globalThis.crypto;
+  if (!webCrypto?.getRandomValues) {
+    throw new Error("crypto.getRandomValues is not available");
+  }
+  webCrypto.getRandomValues(bytes as Uint8Array<ArrayBuffer>);
+}
+
 export function createId(nowMs: number = Date.now()): string {
   const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
+  fillRandom(bytes);
 
   const timestamp = Math.max(0, Math.floor(nowMs));
   bytes[0] = Math.floor(timestamp / 2 ** 40) & 0xff;
