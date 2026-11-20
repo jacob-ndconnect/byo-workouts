@@ -13,7 +13,7 @@ byo-workouts/
 ├── PRINCIPLES.md
 ├── DECISIONS.md
 ├── AGENTS.md
-├── app.json                     Expo config (convert to app.config.ts when it needs to read identity.ts)
+├── app.config.ts                Expo config; reads src/config/identity.ts
 ├── eslint.config.js             includes the layer rules below
 ├── tsconfig.json                alias: @/* -> src/*
 │

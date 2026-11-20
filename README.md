@@ -19,6 +19,12 @@ A local-first workout tracker for iOS and web, part of **BYO Stuff**: bring your
 | [`docs/SETUP.md`](docs/SETUP.md) | Getting the app running on your phone |
 | [`AGENTS.md`](AGENTS.md) | Rules for coding agents working in this repo |
 
+## Tooling
+
+npm, TypeScript strict, ESLint (`npx expo lint`), and Jest (`npm test`).
+
+The record types are described in [`docs/SCHEMA.md`](docs/SCHEMA.md).
+
 ## Run it
 
 ```bash

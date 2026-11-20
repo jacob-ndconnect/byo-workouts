@@ -2,7 +2,7 @@
 
 The order of work, with what "done" means for each phase. Each phase should leave the app in a state you can run and use. Decisions that are still open are listed in `DECISIONS.md` Part 2. Anything in the "later" phases stays out of the code until its phase starts.
 
-Current phase: **0**.
+Current phase: **2**.
 
 ---
 
@@ -23,9 +23,9 @@ Get the scaffolded app running on your phone and the project docs in place. Foll
 The seams that make sync, export, and the server possible later. All of it is plain TypeScript that can be tested without a device.
 
 **Build**
-- `src/config/identity.ts` with the bundle ID (`com.jacobestep.byo.workouts`) and the URL scheme (`byo-workouts`). Point `app.json` at them (convert to `app.config.ts` if needed).
+- `src/config/identity.ts` with the bundle ID (`com.jacobestep.byo.workouts`) and the URL scheme (`byo-workouts`). `app.config.ts` reads them.
 - `src/core/ids.ts` (UUIDv7), `src/core/time.ts` (ISO 8601 UTC), `src/core/schemaVersion.ts` (`"1.0"`).
-- Record types in `src/core/types`, ported from the existing PWA's tables: every record gets `id`, `created_at`, `updated_at`, `deleted_at`, and a nullable `extensions`. Weights in kg, distances in meters, durations in seconds.
+- Record types in `src/core/types`. Every record gets `id`, `created_at`, `updated_at`, `deleted_at`, and a nullable `extensions`. A workout is a session. Sets under it store a tracking mode (`resistance`, `bodyweight`, `duration`, or `distance`) and the measures for that mode. Weights in kg, distances in meters, durations in seconds. See `docs/SCHEMA.md`.
 - `src/data/repository.ts`: `list`, `get`, `create`, `update`, `delete` (soft), and `changesSince`.
 - `src/data/adapters/memory` as the first implementation.
 - A contract test suite that any adapter must pass, and a test runner (jest-expo is the usual choice for Expo; confirm against current docs).
@@ -34,9 +34,7 @@ The seams that make sync, export, and the server possible later. All of it is pl
 **Done when**
 - The contract tests pass against the memory adapter.
 - Linting fails on a `react-native` import inside `src/core` and on an adapter import inside `src/features`.
-- A short note in `docs/` lists each record type and why each field exists. This is the seed of the public schema.
-
-**Open decisions needed:** test framework (DECISIONS C).
+- A short note in `docs/` lists each record type and why each field exists. This is the seed of the public schema. (`docs/SCHEMA.md`)
 
 ---
 

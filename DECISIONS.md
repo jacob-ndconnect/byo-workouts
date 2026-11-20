@@ -40,6 +40,9 @@ Companion to `PRINCIPLES.md`. Part 1 lists decisions that are made and must be f
 - The app opens the backend's own login and approval page in a system web view (OAuth 2.0 with PKCE), and receives a scoped, revocable token stored in the iOS Keychain.
 - A fresh deployment requires a setup secret before the first owner can claim it.
 
+### Tooling
+- npm, TypeScript strict, ESLint (`eslint-config-expo`), and Jest via `jest-expo` for unit tests and the adapter contract. `npm test` runs Jest once.
+
 ### Native integrations (in scope for this app over time)
 - App Intents and Shortcuts, widgets, Live Activities for rest timers, Spotlight indexing, HealthKit workouts. See the bookmarked list in the project notes. None are required for the first local version, but code should not make them harder (see rule 6).
 
@@ -134,7 +137,6 @@ Format notes say exactly what shape each answer takes. "Recommended" is a sugges
 ### C. Can wait until the work reaches it
 
 - **Web data in phase one:** web has no local mode, so decide what the web UI runs against before the server exists. Options: an in-memory adapter for layout work, or a browser-storage adapter. Format: pick one.
-- **Tooling:** package manager, TypeScript strictness, linter, and test framework. Format: a short list in the README.
 - **Face ID lock:** whether to offer an app lock. Format: yes or no, and when.
 - **Server update flow:** how a self-hoster updates (package-based server, deploy hook, or other). Format: a short design note after the Vercel spike.
 - **Merge policy** when uploading local data into a backend that already has data. Format: one sentence rule, like "newest `updated_at` wins."
