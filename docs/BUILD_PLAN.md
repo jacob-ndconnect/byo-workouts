@@ -2,7 +2,7 @@
 
 The order of work, with what "done" means for each phase. Each phase should leave the app in a state you can run and use. Decisions that are still open are listed in `DECISIONS.md` Part 2. Anything in the "later" phases stays out of the code until its phase starts.
 
-Current phase: **4** (Phase 3 complete — real PWA history imported on device).
+Current phase: **4** (slice **4.1** done — native shell and home; see below).
 
 ---
 
@@ -72,14 +72,38 @@ The seams that make sync, export, and the server possible later. All of it is pl
 
 Rebuild what the PWA does, using the settled UX. Keep to parity. New features wait.
 
-**Build**
-- Native tabs: Workouts, History, Routines, Settings.
-- Logging a workout (the part you do mid-session, so it has to be fast), exercises, routines, history, and whatever trend views you use today.
+Work in **slices**. Each slice should leave the app runnable on device.
+
+### Slice 4.1 — Native shell and home (done)
+
+**Shipped**
+- `expo-router/native-tabs`: **Home**, **History**, **Settings** (same three-tab pattern as the PWA; routines live under Settings).
+- Root stack pushes `workout/[dayId]` with the tab bar hidden mid-session.
+- Home reads local data: week strip, active routine, next-day highlight, day cards → workout stub.
+- Settings grouped list: Exercises, Routines, Defaults, Import, **Connection** (local-only copy). JSON import moved here from the Phase 3 screen.
+- PWA-aligned brand colors, card radius, and dark-mode text on grouped surfaces.
+
+**Not in this slice**
+- Real workout logging, history, or settings editors. Overlays use native stack / `formSheet` when those flows land (no JS drawer library).
+
+### Slice 4.2 — Next (pick in a fresh plan)
+
+Suggested order by gym value (adjust as you like):
+
+1. **Mid-workout logging** — exercise list, log overlay as native sheet, finish session (reference `workout-tracker` under `/workout`).
+2. **History** — list, edit/delete via sheets.
+3. **Routines and exercises** — library, routine editor, defaults; still one Settings entry each unless you split tabs later.
+4. **Settings polish** — export UI, responsive iPad sidebar (native tabs already support `sidebarAdaptable`).
+
+Defer until core flows work: web memory smoke tests, JSON export from device, trends/analytics if the PWA has them.
+
+**Build** (full phase, unchanged goal)
+- Logging a workout (fast, one-handed), exercises, routines, history, and whatever trend views you use today.
 - Settings, including a **Connection** screen that says the app is running locally.
-- Responsive layouts: tabs on a phone, a sidebar or split view on wide screens.
+- Responsive layouts: tabs on a phone, sidebar on wide screens where the platform provides it.
 - Web: until the server exists, run the web UI against the memory adapter for layout work. A browser-storage adapter is an option if you want the web version usable on its own (DECISIONS C).
 
-**Done when**
+**Done when** (phase 4 complete)
 - You can log a full workout, edit a routine, and review history without opening the old PWA.
 - The app is usable one-handed, in a gym, with bad signal.
 
