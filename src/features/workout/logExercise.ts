@@ -1,5 +1,6 @@
 import { measuresFromParsed, parseLogFormValues, repeatCount } from "@/core/logic/logForm";
 import { resolveLoggedFields } from "@/core/logic/logFields";
+import { nowIso } from "@/core/time";
 import type { Exercise } from "@/core/types";
 import type { Repository } from "@/data/repository";
 
@@ -23,11 +24,13 @@ export async function logExercise(
 
   const repeat = repeatCount(parsed);
   const measures = measuresFromParsed(input.exercise.tracking_mode, parsed);
+  const loggedAt = nowIso();
 
   for (let i = 0; i < repeat; i++) {
     await repo.create("sets", {
       workout_id: input.workoutId,
       exercise_id: input.exercise.id,
+      logged_at: loggedAt,
       routine_day_exercise_id: input.routineDayExerciseId,
       sort_order: input.nextSortOrder + i,
       tracking_mode: input.exercise.tracking_mode,

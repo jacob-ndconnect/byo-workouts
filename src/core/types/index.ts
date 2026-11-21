@@ -65,6 +65,8 @@ export type Workout = RecordBase & {
 export type SetEntry = RecordBase & {
   workout_id: string;
   exercise_id: string;
+  /** When the set was performed. Editable. `created_at` stays the time the row was written. */
+  logged_at: string;
   routine_day_exercise_id: string | null;
   sort_order: number;
   tracking_mode: TrackingMode;

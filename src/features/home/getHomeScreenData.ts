@@ -45,7 +45,7 @@ function lastLoggedRoutineDayId(
 ): string | null {
   const withSlot = sets
     .filter((s) => s.routine_day_exercise_id)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+    .sort((a, b) => b.logged_at.localeCompare(a.logged_at));
 
   for (const set of withSlot) {
     const dayId = routineDayIdForSet(set, slotToDay);
@@ -63,10 +63,10 @@ function todaySessionRoutineDayId(
   const inSession = sets
     .filter((s) => {
       if (!s.routine_day_exercise_id) return false;
-      const at = parseInstant(s.created_at);
+      const at = parseInstant(s.logged_at);
       return at >= start && at < end;
     })
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    .sort((a, b) => a.logged_at.localeCompare(b.logged_at));
 
   for (const set of inSession) {
     const dayId = routineDayIdForSet(set, slotToDay);
@@ -82,13 +82,13 @@ function weekLogsFromSets(
 ): { loggedAt: Date; isCardio: boolean }[] {
   return sets
     .filter((set) => {
-      const at = parseInstant(set.created_at);
+      const at = parseInstant(set.logged_at);
       return at >= week.start && at < week.end;
     })
     .map((set) => {
       const exercise = exerciseById.get(set.exercise_id);
       return {
-        loggedAt: parseInstant(set.created_at),
+        loggedAt: parseInstant(set.logged_at),
         isCardio: exercise ? isPwaCardioExercise(exercise) : false,
       };
     });

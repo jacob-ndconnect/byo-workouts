@@ -73,6 +73,7 @@ One performed effort. A screen can still offer "4 × 8" and write four identical
 |---|---|
 | `workout_id` | The session. |
 | `exercise_id` | The movement. |
+| `logged_at` | When this set was performed. History can change it. `created_at` stays the time the row was written. |
 | `routine_day_exercise_id` | The planned slot this set fulfilled, when it came from a routine. Null for an exercise added during the session. Needed when the same exercise is planned twice in one day. |
 | `sort_order` | Order within the workout. |
 | `tracking_mode` | The mode at log time. |

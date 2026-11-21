@@ -32,6 +32,7 @@ function samples(): { [C in Collection]: NewRecord<Records[C]> } {
     sets: {
       workout_id: "workout-1",
       exercise_id: "exercise-1",
+      logged_at: STARTED_AT,
       routine_day_exercise_id: null,
       sort_order: 0,
       tracking_mode: "resistance",

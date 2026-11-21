@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "app": "BYO Workouts",
   "exported_at": "2026-06-01T12:00:00.000Z",
   "exercises": [
@@ -61,6 +61,7 @@
       },
       "workout_id": "01930101-0000-7000-8000-000000000010",
       "exercise_id": "01930101-0000-7000-8000-000000000001",
+      "logged_at": "2026-03-01T14:30:00.000Z",
       "routine_day_exercise_id": null,
       "sort_order": 0,
       "tracking_mode": "resistance",

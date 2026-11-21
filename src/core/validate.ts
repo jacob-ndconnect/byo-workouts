@@ -317,6 +317,7 @@ function setFields(input: Record<string, unknown>, partial: boolean) {
   };
   take("workout_id", (value) => readId(value, "workout_id"));
   take("exercise_id", (value) => readId(value, "exercise_id"));
+  take("logged_at", (value) => readTimestamp(value, "logged_at"));
   take("routine_day_exercise_id", (value) =>
     readNullableId(value, "routine_day_exercise_id"),
   );

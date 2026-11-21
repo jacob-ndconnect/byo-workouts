@@ -277,6 +277,7 @@ function buildSetsForLog(
       },
       workout_id: workoutId,
       exercise_id: log.exercise_id,
+      logged_at: loggedAt,
       routine_day_exercise_id: log.routine_day_exercise_id,
       sort_order: sortStart + i,
       tracking_mode: mode,

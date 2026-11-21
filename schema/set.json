@@ -8,6 +8,7 @@
       "properties": {
         "workout_id": { "type": "string", "minLength": 1 },
         "exercise_id": { "type": "string", "minLength": 1 },
+        "logged_at": { "type": "string", "format": "date-time" },
         "routine_day_exercise_id": {
           "oneOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }]
         },
@@ -55,6 +56,7 @@
       "required": [
         "workout_id",
         "exercise_id",
+        "logged_at",
         "routine_day_exercise_id",
         "sort_order",
         "tracking_mode",

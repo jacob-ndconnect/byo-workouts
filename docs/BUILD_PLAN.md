@@ -2,7 +2,7 @@
 
 The order of work, with what "done" means for each phase. Each phase should leave the app in a state you can run and use. Decisions that are still open are listed in `DECISIONS.md` Part 2. Anything in the "later" phases stays out of the code until its phase starts.
 
-Current phase: **4** (next slice: **4.3** — history list, edit/delete).
+Current phase: **4** (next slice: **4.4** — routines and exercises).
 
 ---
 
@@ -97,41 +97,53 @@ Work in **slices**. Each slice should leave the app runnable on device.
 
 **PWA reference:** mid-workout flows in `workout-tracker` (day list, per-exercise log, add exercise).
 
-### Slice 4.3 — History (next)
+### Slice 4.3 — History (done)
 
-**Goal:** Replace the History tab stub with a real list of logged sets, with edit and delete through native form sheets (same sheet patterns as Slice 4.2).
+**Shipped**
+- History lists one row per set (exercise, measures, date), sorted from a header menu (newest, oldest, exercise A–Z, Z–A).
+- Long-press menu: **Edit** and **Delete**. No trailing buttons. Delete confirms, then soft-deletes.
+- Edit is a `formSheet`: date and the exercise’s log fields (the sets count is omitted). Schema **1.2** adds `sets.logged_at` so the date can change without rewriting `created_at`. Home’s week strip reads `logged_at`.
+- Mid-workout **Sets** still means “write N identical set rows”; History shows each row. Same as PWA import behavior.
 
-**Parity target (PWA)** — use these as the feature checklist when planning:
+**Not in this slice**
+- Export-from-history. Device export stays in settings polish.
+- Routine and exercise editors.
+
+### Slice 4.4 — Routines and exercises (next)
+
+**Goal:** Replace the Settings stubs for **Exercises**, **Routines**, and **Defaults** so you can maintain the library and active routine without the PWA. Home should reflect edits (active routine, day cards) on focus like History and Home do today.
+
+**Parity target (PWA)** — use as the planning checklist:
 
 | Area | `workout-tracker` |
 |------|-------------------|
-| List + sort | `app/(app)/history/page.tsx`, `components/history/workout-history-table.tsx` |
-| Edit overlay | `components/history/workout-history-edit-overlay.tsx` |
-| Data + mutations | `lib/actions/history.ts` (`getWorkoutHistory`, `updateWorkoutLog`, `deleteWorkoutLog`) |
-| Sort/format helpers | `lib/workout/history.ts` |
+| Settings entry points | `app/(app)/settings/exercises/page.tsx`, `.../routines/page.tsx`, `.../defaults/page.tsx` |
+| Exercises UI | `components/exercises/exercises-manager.tsx`, `exercise-form.tsx` |
+| Routines UI | `components/routines/routines-manager.tsx`, `routine-editor.tsx`, `routine-create-form.tsx` |
+| Defaults UI | `components/defaults/defaults-manager.tsx` |
+| Data + mutations | `lib/actions/exercises.ts`, `lib/actions/routines.ts`, `lib/actions/defaults.ts` |
 
-**Likely app work (to confirm in planning)**
+**Likely app work (confirm in planning)**
 
-- **Data:** List `sets` (and related `exercises` / `workouts` for labels) via `openRepository()` only — no adapter imports in UI. Soft-delete for remove. Edits set `logged_at` and measure fields consistently with mid-workout `logExercise` / schema 1.1 `extra_values`.
-- **UI:** `src/app/(tabs)/history/` — grouped or flat list, sort control matching PWA options where it still makes sense on phone.
-- **Sheets:** Edit route(s) under the History stack (or tab-local stack) reusing log-field resolution from `src/core/logic/logFields` and formatting from workout logging.
-- **Delete:** Confirmation alert (same pattern as finish workout), then repository delete.
-- **Home week strip:** Refresh or invalidate when history changes if it reads the same aggregates.
+- **Data:** All reads and writes through `openRepository()`. Exercises: create, edit name / tracking / `logged_fields` / `settings_fields`, archive. Routines: create, rename, activate (one active), archive; days and day slots (`routine_days`, `routine_day_exercises`) with sort order. Defaults: update the single `defaults` row (`default_sets`, `default_reps`) used to prefill the log sheet.
+- **UI:** `src/app/(tabs)/settings/exercises`, `routines`, `defaults` — grouped lists and native stack / `formSheet` editors, same patterns as workout logging and history edit. Routines may need a dedicated editor stack (days, reorder, pick exercises).
+- **Home:** Already loads on focus; no extra channel if editors only touch repository records Home already reads.
+- **Import:** Settings import screen is done; editors must not break imported PWA shape (`extensions.pwa`, machine vs tracking mode).
 
-**Explicitly later (other slices)**
+**Explicitly later (slice 4.5 / settings polish)**
 
-- Export-from-history button lives on PWA History; device JSON/CSV export UI can stay in **settings polish** unless you want it in 4.3.
-- Routines/exercises library editors → slice after history.
-- Trends/analytics beyond list/edit/delete.
+- Device JSON export from Settings (PWA has export buttons on settings shell).
+- Per-exercise JSON import/export in the managers if PWA has them — port only if you still use that workflow.
+- Responsive iPad settings sidebar (native tabs already support `sidebarAdaptable`).
 
-### Remaining phase 4 slices (after 4.3)
+### Remaining phase 4 slices
 
 Suggested order by gym value (adjust as you like):
 
 1. ~~**Mid-workout logging**~~ (4.2, done).
-2. ~~**History**~~ (4.3, current).
-3. **Routines and exercises** — library, routine editor, defaults; still one Settings entry each unless you split tabs later.
-4. **Settings polish** — export UI, responsive iPad sidebar (native tabs already support `sidebarAdaptable`).
+2. ~~**History**~~ (4.3, done).
+3. **Routines and exercises** (4.4, current).
+4. **Settings polish** (4.5) — export UI, sidebar, anything left from PWA settings.
 
 Defer until core flows work: web memory smoke tests, JSON export from device, trends/analytics if the PWA has them.
 

@@ -57,6 +57,7 @@ export const sets = sqliteTable("sets", {
   ...baseColumns(),
   workout_id: text("workout_id").notNull(),
   exercise_id: text("exercise_id").notNull(),
+  logged_at: text("logged_at").notNull(),
   routine_day_exercise_id: text("routine_day_exercise_id"),
   sort_order: integer("sort_order").notNull(),
   tracking_mode: text("tracking_mode").notNull(),

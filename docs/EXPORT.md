@@ -6,7 +6,7 @@ A BYO Workouts export is one JSON file. It is the public interchange format: bac
 
 | Field | Meaning |
 |---|---|
-| `schema_version` | `"1.0"` today. Minor versions are additive. |
+| `schema_version` | `"1.2"` today. Minor versions are additive. `1.0` and `1.1` files still import; a set missing `logged_at` gets `created_at`. |
 | `app` | Always `"BYO Workouts"`. |
 | `exported_at` | When the file was written, ISO 8601 UTC. |
 | Collection arrays | `exercises`, `routines`, `routine_days`, `routine_day_exercises`, `workouts`, `sets`, `defaults`. |

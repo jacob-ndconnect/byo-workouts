@@ -40,7 +40,9 @@ function sortById<C extends Collection>(rows: Records[C][]): Records[C][] {
   return [...rows].sort((a, b) => a.id.localeCompare(b.id));
 }
 
-/** Fills schema 1.1 fields when importing a 1.0 export file. */
+const SUPPORTED_SCHEMA_VERSIONS = new Set(["1.0", "1.1", SCHEMA_VERSION]);
+
+/** Fills fields added after 1.0 so older export files still import. */
 function patchLegacyImportRow(collection: Collection, row: unknown): unknown {
   if (row === null || typeof row !== "object" || Array.isArray(row)) {
     return row;
@@ -61,6 +63,9 @@ function patchLegacyImportRow(collection: Collection, row: unknown): unknown {
   }
   if (collection === "sets" && !Object.hasOwn(obj, "extra_values")) {
     obj.extra_values = null;
+  }
+  if (collection === "sets" && !Object.hasOwn(obj, "logged_at")) {
+    obj.logged_at = typeof obj.created_at === "string" ? obj.created_at : "";
   }
   return obj;
 }
@@ -86,9 +91,9 @@ export async function exportDocument(
 export function parseExportDocument(raw: unknown): ExportDocument {
   const obj = asObject(raw);
   const schema_version = readString(obj.schema_version, "schema_version");
-  if (schema_version !== SCHEMA_VERSION && schema_version !== "1.0") {
+  if (!SUPPORTED_SCHEMA_VERSIONS.has(schema_version)) {
     throw new ExportFormatError(
-      `Unsupported schema_version "${schema_version}" (expected ${SCHEMA_VERSION} or 1.0)`,
+      `Unsupported schema_version "${schema_version}" (expected ${[...SUPPORTED_SCHEMA_VERSIONS].join(", ")})`,
     );
   }
 
