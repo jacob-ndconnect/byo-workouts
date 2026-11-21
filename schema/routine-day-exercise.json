@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://byo.workouts/schema/1.0/routine-day-exercise.json",
+  "allOf": [
+    { "$ref": "record-base.json" },
+    {
+      "type": "object",
+      "properties": {
+        "routine_day_id": { "type": "string", "minLength": 1 },
+        "exercise_id": { "type": "string", "minLength": 1 },
+        "sort_order": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["routine_day_id", "exercise_id", "sort_order"]
+    }
+  ]
+}

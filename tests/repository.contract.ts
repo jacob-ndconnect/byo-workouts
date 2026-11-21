@@ -180,6 +180,30 @@ export function registerRepositoryContract(
       expect(await repo.changesSince("exercises", tombstone.updated_at)).toEqual([]);
     });
 
+    it("replaceAll preserves ids, timestamps, and tombstones", async () => {
+      const { repo } = setup();
+      const created = await repo.create("exercises", samples().exercises);
+      await repo.delete("exercises", created.id);
+      const [tombstone] = await repo.changesSince("exercises", "");
+      const deletedId = created.id;
+
+      await repo.replaceAll({
+        exercises: [tombstone],
+        routines: [],
+        routine_days: [],
+        routine_day_exercises: [],
+        workouts: [],
+        sets: [],
+        defaults: [],
+      });
+
+      expect(await repo.list("exercises")).toEqual([]);
+      const [afterTombstone] = await repo.changesSince("exercises", "");
+      expect(afterTombstone.id).toBe(deletedId);
+      expect(afterTombstone.deleted_at).toBe(tombstone.deleted_at);
+      expect(afterTombstone.name).toBe("Leg press");
+    });
+
     it("treats a second delete as a no-op and throws when the id is unknown", async () => {
       const { repo, advance } = setup();
       const created = await repo.create("exercises", samples().exercises);

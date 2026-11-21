@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://byo.workouts/schema/1.0/export-document.json",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "app",
+    "exported_at",
+    "exercises",
+    "routines",
+    "routine_days",
+    "routine_day_exercises",
+    "workouts",
+    "sets",
+    "defaults"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "app": { "const": "BYO Workouts" },
+    "exported_at": { "type": "string", "format": "date-time" },
+    "exercises": { "type": "array", "items": { "$ref": "exercise.json" } },
+    "routines": { "type": "array", "items": { "$ref": "routine.json" } },
+    "routine_days": { "type": "array", "items": { "$ref": "routine-day.json" } },
+    "routine_day_exercises": {
+      "type": "array",
+      "items": { "$ref": "routine-day-exercise.json" }
+    },
+    "workouts": { "type": "array", "items": { "$ref": "workout.json" } },
+    "sets": { "type": "array", "items": { "$ref": "set.json" } },
+    "defaults": { "type": "array", "items": { "$ref": "defaults.json" } }
+  }
+}

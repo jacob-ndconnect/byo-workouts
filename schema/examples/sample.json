@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "app": "BYO Workouts",
+  "exported_at": "2026-06-01T12:00:00.000Z",
+  "exercises": [
+    {
+      "id": "01930101-0000-7000-8000-000000000001",
+      "created_at": "2026-01-15T18:00:00.000Z",
+      "updated_at": "2026-01-15T18:00:00.000Z",
+      "deleted_at": null,
+      "extensions": {
+        "pwa": { "type": "machine", "logged_field_defs": ["weight", "sets", "reps"] }
+      },
+      "name": "Chest press",
+      "tracking_mode": "resistance",
+      "archived": false,
+      "settings_fields": { "seat": "4" }
+    },
+    {
+      "id": "01930101-0000-7000-8000-000000000002",
+      "created_at": "2026-01-10T12:00:00.000Z",
+      "updated_at": "2026-02-01T12:00:00.000Z",
+      "deleted_at": "2026-02-01T12:00:00.000Z",
+      "extensions": null,
+      "name": "Old press",
+      "tracking_mode": "resistance",
+      "archived": true,
+      "settings_fields": {}
+    }
+  ],
+  "routines": [],
+  "routine_days": [],
+  "routine_day_exercises": [],
+  "workouts": [
+    {
+      "id": "01930101-0000-7000-8000-000000000010",
+      "created_at": "2026-03-01T14:00:00.000Z",
+      "updated_at": "2026-03-01T16:00:00.000Z",
+      "deleted_at": null,
+      "extensions": null,
+      "started_at": "2026-03-01T14:00:00.000Z",
+      "ended_at": "2026-03-01T16:00:00.000Z",
+      "routine_day_id": null,
+      "note": null
+    }
+  ],
+  "sets": [
+    {
+      "id": "01930101-0000-7000-8000-000000000020",
+      "created_at": "2026-03-01T14:30:00.000Z",
+      "updated_at": "2026-03-01T14:30:00.000Z",
+      "deleted_at": null,
+      "extensions": {
+        "pwa": {
+          "log_id": "legacy-log-1",
+          "logged_at": "2026-03-01T14:30:00.000Z",
+          "values": { "weight": 60, "sets": 4, "reps": 10 }
+        }
+      },
+      "workout_id": "01930101-0000-7000-8000-000000000010",
+      "exercise_id": "01930101-0000-7000-8000-000000000001",
+      "routine_day_exercise_id": null,
+      "sort_order": 0,
+      "tracking_mode": "resistance",
+      "weight_kg": 27.216,
+      "reps": 10,
+      "added_weight_kg": null,
+      "seconds": null,
+      "meters": null,
+      "kind": null,
+      "note": null
+    }
+  ],
+  "defaults": [
+    {
+      "id": "01930101-0000-7000-8000-000000000099",
+      "created_at": "2026-01-01T00:00:00.000Z",
+      "updated_at": "2026-01-01T00:00:00.000Z",
+      "deleted_at": null,
+      "extensions": null,
+      "default_sets": 3,
+      "default_reps": 10
+    }
+  ]
+}

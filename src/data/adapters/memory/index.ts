@@ -1,9 +1,15 @@
 import { createId } from "@/core/ids";
 import { nowIso } from "@/core/time";
-import type { Collection, Records } from "@/core/types";
-import { cloneRecord, sanitizeCreate, sanitizePatch } from "@/core/validate";
+import { COLLECTIONS, type Collection, type Records } from "@/core/types";
+import {
+  cloneRecord,
+  sanitizeCreate,
+  sanitizePatch,
+  sanitizeStoredRecord,
+} from "@/core/validate";
 import {
   RecordNotFoundError,
+  type ReplaceAllPayload,
   type Repository,
   type RepositoryClock,
 } from "@/data/repository";
@@ -109,6 +115,26 @@ export function createMemoryRepository(
         .filter((record) => record.updated_at > since)
         .sort((a, b) => a.updated_at.localeCompare(b.updated_at) || byId(a, b))
         .map((record) => cloneRecord(record));
+    },
+
+    async replaceAll(data: ReplaceAllPayload) {
+      const next = emptyStore();
+      for (const collection of COLLECTIONS) {
+        for (const row of data[collection]) {
+          const record = sanitizeStoredRecord(collection, row);
+          (next[collection] as Map<string, Records[typeof collection]>).set(
+            record.id,
+            cloneRecord(record),
+          );
+        }
+      }
+      for (const collection of COLLECTIONS) {
+        const target = store[collection] as Map<string, Records[typeof collection]>;
+        target.clear();
+        for (const [id, record] of next[collection]) {
+          target.set(id, record);
+        }
+      }
     },
   };
 }

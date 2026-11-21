@@ -358,3 +358,19 @@ export function sanitizePatch<C extends Collection>(
 export function cloneRecord<T extends RecordBase>(record: T): T {
   return structuredClone(record);
 }
+
+/** Validates a stored row including id and timestamps (import / replaceAll). */
+export function sanitizeStoredRecord<C extends Collection>(
+  collection: C,
+  input: unknown,
+): Records[C] {
+  const raw = asObject(input);
+  return {
+    id: readId(readRequired(raw, "id"), "id"),
+    created_at: readTimestamp(readRequired(raw, "created_at"), "created_at"),
+    updated_at: readTimestamp(readRequired(raw, "updated_at"), "updated_at"),
+    deleted_at: readNullableTimestamp(readRequired(raw, "deleted_at"), "deleted_at"),
+    ...domainFields(collection, raw, false),
+    extensions: readExtensions(present(raw, "extensions") ? raw.extensions : null),
+  } as Records[C];
+}

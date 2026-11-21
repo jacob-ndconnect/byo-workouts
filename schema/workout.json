@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://byo.workouts/schema/1.0/workout.json",
+  "allOf": [
+    { "$ref": "record-base.json" },
+    {
+      "type": "object",
+      "properties": {
+        "started_at": { "type": "string", "format": "date-time" },
+        "ended_at": {
+          "oneOf": [{ "type": "null" }, { "type": "string", "format": "date-time" }]
+        },
+        "routine_day_id": {
+          "oneOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }]
+        },
+        "note": {
+          "oneOf": [{ "type": "null" }, { "type": "string" }]
+        }
+      },
+      "required": ["started_at", "ended_at", "routine_day_id", "note"]
+    }
+  ]
+}

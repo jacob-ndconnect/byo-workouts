@@ -1,4 +1,27 @@
-import type { Collection, NewRecord, RecordPatch, Records } from "@/core/types";
+import type {
+  Collection,
+  Defaults,
+  Exercise,
+  NewRecord,
+  RecordPatch,
+  Records,
+  Routine,
+  RoutineDay,
+  RoutineDayExercise,
+  SetEntry,
+  Workout,
+} from "@/core/types";
+
+/** Full snapshot per collection, used for import and `replaceAll`. */
+export type ReplaceAllPayload = {
+  exercises: Exercise[];
+  routines: Routine[];
+  routine_days: RoutineDay[];
+  routine_day_exercises: RoutineDayExercise[];
+  workouts: Workout[];
+  sets: SetEntry[];
+  defaults: Defaults[];
+};
 
 export class RecordNotFoundError extends Error {
   readonly collection: Collection;
@@ -33,6 +56,8 @@ export interface Repository {
     collection: C,
     since: string,
   ): Promise<Records[C][]>;
+  /** Wipes every collection and inserts records with ids and timestamps unchanged. */
+  replaceAll(data: ReplaceAllPayload): Promise<void>;
 }
 
 /** Lets tests (and later the SQLite adapter) control timestamps. */

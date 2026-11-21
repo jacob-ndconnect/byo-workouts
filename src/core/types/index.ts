@@ -90,6 +90,16 @@ export type Records = {
 
 export type Collection = keyof Records;
 
+export const COLLECTIONS: Collection[] = [
+  "exercises",
+  "routines",
+  "routine_days",
+  "routine_day_exercises",
+  "workouts",
+  "sets",
+  "defaults",
+];
+
 type SystemKey = "id" | "created_at" | "updated_at" | "deleted_at";
 
 /** Caller-supplied fields for a new record. The repository assigns id and timestamps. */

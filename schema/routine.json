@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://byo.workouts/schema/1.0/routine.json",
+  "allOf": [
+    { "$ref": "record-base.json" },
+    {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "active": { "type": "boolean" },
+        "archived": { "type": "boolean" }
+      },
+      "required": ["name", "active", "archived"]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://byo.workouts/schema/1.0/defaults.json",
+  "allOf": [
+    { "$ref": "record-base.json" },
+    {
+      "type": "object",
+      "properties": {
+        "default_sets": { "type": "integer", "minimum": 0 },
+        "default_reps": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["default_sets", "default_reps"]
+    }
+  ]
+}

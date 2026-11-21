@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://byo.workouts/schema/1.0/exercise.json",
+  "allOf": [
+    { "$ref": "record-base.json" },
+    {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "tracking_mode": {
+          "type": "string",
+          "enum": ["resistance", "bodyweight", "duration", "distance"]
+        },
+        "archived": { "type": "boolean" },
+        "settings_fields": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "required": ["name", "tracking_mode", "archived", "settings_fields"]
+    }
+  ]
+}

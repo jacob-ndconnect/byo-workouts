@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://byo.workouts/schema/1.0/record-base.json",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "deleted_at": {
+      "oneOf": [{ "type": "null" }, { "type": "string", "format": "date-time" }]
+    },
+    "extensions": {
+      "oneOf": [{ "type": "null" }, { "type": "object", "additionalProperties": true }]
+    }
+  },
+  "required": ["id", "created_at", "updated_at", "deleted_at", "extensions"]
+}

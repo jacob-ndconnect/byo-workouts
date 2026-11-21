@@ -1,9 +1,16 @@
 import { createId } from "@/core/ids";
 import { nowIso } from "@/core/time";
-import type { Collection, Records } from "@/core/types";
-import { cloneRecord, sanitizeCreate, sanitizePatch } from "@/core/validate";
+import { COLLECTIONS, type Collection, type Records } from "@/core/types";
+import {
+  cloneRecord,
+  sanitizeCreate,
+  sanitizePatch,
+  sanitizeStoredRecord,
+} from "@/core/validate";
+import { setReplaceAllCollection } from "@/data/replaceAllPayload";
 import {
   RecordNotFoundError,
+  type ReplaceAllPayload,
   type Repository,
   type RepositoryClock,
 } from "@/data/repository";
@@ -152,6 +159,24 @@ export function createSqliteRepository(
             byId({ id: String(a.id) }, { id: String(b.id) }),
         )
         .map((row) => cloneRecord(rowToRecord(collection, row)));
+    },
+
+    async replaceAll(data: ReplaceAllPayload) {
+      const sanitized = {} as ReplaceAllPayload;
+      for (const collection of COLLECTIONS) {
+        const rows = data[collection].map((row) => sanitizeStoredRecord(collection, row));
+        setReplaceAllCollection(sanitized, collection, rows);
+      }
+
+      db.transaction((tx) => {
+        for (const collection of COLLECTIONS) {
+          const table = tableFor(collection);
+          tx.delete(table).run();
+          for (const record of sanitized[collection]) {
+            tx.insert(table).values(recordToRow(collection, record) as never).run();
+          }
+        }
+      });
     },
   };
 }

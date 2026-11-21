@@ -2,7 +2,7 @@
 
 The order of work, with what "done" means for each phase. Each phase should leave the app in a state you can run and use. Decisions that are still open are listed in `DECISIONS.md` Part 2. Anything in the "later" phases stays out of the code until its phase starts.
 
-Current phase: **2**.
+Current phase: **4** (Phase 3 complete — real PWA history imported on device).
 
 ---
 

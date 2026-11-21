@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://byo.workouts/schema/1.0/set.json",
+  "allOf": [
+    { "$ref": "record-base.json" },
+    {
+      "type": "object",
+      "properties": {
+        "workout_id": { "type": "string", "minLength": 1 },
+        "exercise_id": { "type": "string", "minLength": 1 },
+        "routine_day_exercise_id": {
+          "oneOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }]
+        },
+        "sort_order": { "type": "integer", "minimum": 0 },
+        "tracking_mode": {
+          "type": "string",
+          "enum": ["resistance", "bodyweight", "duration", "distance"]
+        },
+        "weight_kg": {
+          "oneOf": [{ "type": "null" }, { "type": "number", "minimum": 0 }]
+        },
+        "reps": {
+          "oneOf": [{ "type": "null" }, { "type": "integer", "minimum": 0 }]
+        },
+        "added_weight_kg": {
+          "oneOf": [{ "type": "null" }, { "type": "number", "minimum": 0 }]
+        },
+        "seconds": {
+          "oneOf": [{ "type": "null" }, { "type": "number", "minimum": 0 }]
+        },
+        "meters": {
+          "oneOf": [{ "type": "null" }, { "type": "number", "minimum": 0 }]
+        },
+        "kind": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "enum": ["warmup", "work", "drop", "failure"] }
+          ]
+        },
+        "note": {
+          "oneOf": [{ "type": "null" }, { "type": "string" }]
+        }
+      },
+      "required": [
+        "workout_id",
+        "exercise_id",
+        "routine_day_exercise_id",
+        "sort_order",
+        "tracking_mode",
+        "weight_kg",
+        "reps",
+        "added_weight_kg",
+        "seconds",
+        "meters",
+        "kind",
+        "note"
+      ]
+    }
+  ]
+}
