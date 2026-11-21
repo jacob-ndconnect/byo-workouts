@@ -10,10 +10,11 @@ import {
   runMigrations,
 } from "@/data/migrations/run";
 
-import { migration11 } from "./migrations/1.1";
+import { migration11 } from "@/data/migrations/1.1";
+import { migration12 } from "./migrations/1.2";
 import { registerRepositoryContract } from "./repository.contract";
 
-function openMemoryDatabase(migrations = [migration10]) {
+function openMemoryDatabase(migrations = [migration10, migration11]) {
   const native = new Database(":memory:");
   runMigrations(migrationClientFromBetterSqlite3(native), migrations);
   const db = drizzle(native, { schema: sqliteSchema });
@@ -28,12 +29,16 @@ describe("sqlite migrations", () => {
     const repo = createSqliteRepository(drizzle(native, { schema: sqliteSchema }));
     const before = await repo.create("defaults", { default_sets: 2, default_reps: 5 });
 
-    runMigrations(migrationClientFromBetterSqlite3(native), [migration10, migration11]);
+    runMigrations(migrationClientFromBetterSqlite3(native), [
+      migration10,
+      migration11,
+      migration12,
+    ]);
 
     const version = native
       .prepare("SELECT schema_version FROM meta WHERE id = 1")
       .get() as { schema_version: string };
-    expect(version.schema_version).toBe("1.1");
+    expect(version.schema_version).toBe("1.2");
 
     const row = native
       .prepare("SELECT id, migration_probe FROM defaults WHERE id = ?")

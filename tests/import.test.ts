@@ -35,7 +35,7 @@ describe("parseImportJson", () => {
       timeZone: "UTC",
       exportedAt: "2026-06-20T12:00:00.000Z",
     });
-    expect(doc.schema_version).toBe("1.0");
+    expect(doc.schema_version).toBe("1.1");
     expect(doc.workouts).toHaveLength(1);
     expect(doc.sets).toHaveLength(1);
   });

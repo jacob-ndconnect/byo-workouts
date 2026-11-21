@@ -13,6 +13,7 @@ function samples(): { [C in Collection]: NewRecord<Records[C]> } {
       name: "Leg press",
       tracking_mode: "resistance",
       archived: false,
+      logged_fields: ["weight", "sets", "reps"],
       settings_fields: { seat: "3" },
     },
     routines: { name: "Push", active: true, archived: false },
@@ -41,6 +42,7 @@ function samples(): { [C in Collection]: NewRecord<Records[C]> } {
       meters: null,
       kind: null,
       note: null,
+      extra_values: null,
     },
     defaults: { default_sets: 3, default_reps: 10 },
   };

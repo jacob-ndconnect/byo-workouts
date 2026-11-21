@@ -1,4 +1,5 @@
 import { createId } from "@/core/ids";
+import { measuresFromParsed } from "@/core/logic/logForm";
 import { SCHEMA_VERSION } from "@/core/schemaVersion";
 import type { Exercise, SetEntry, TrackingMode, Workout } from "@/core/types";
 import { isIsoUtc, parseInstantToIsoUtc } from "@/core/time";
@@ -16,10 +17,6 @@ import type {
   PwaWorkoutLog,
 } from "./pwaTypes";
 
-const LB_TO_KG = 0.453592;
-const MILES_TO_METERS = 1609.344;
-const MINUTES_TO_SECONDS = 60;
-
 export type ConvertFromPwaOptions = {
   timeZone: string;
   exportedAt: string;
@@ -27,21 +24,7 @@ export type ConvertFromPwaOptions = {
   catalogTimestamp?: string;
 };
 
-function round3(value: number): number {
-  return Math.round(value * 1000) / 1000;
-}
-
-export function lbToKg(lb: number): number {
-  return round3(lb * LB_TO_KG);
-}
-
-export function milesToMeters(miles: number): number {
-  return round3(miles * MILES_TO_METERS);
-}
-
-export function minutesToSeconds(minutes: number): number {
-  return round3(minutes * MINUTES_TO_SECONDS);
-}
+export { lbToKg, milesToMeters, minutesToSeconds } from "@/core/logic/units";
 
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -184,6 +167,7 @@ function mapExercise(row: PwaExercise, timestamp: string): Exercise {
     name: row.name.trim(),
     tracking_mode: resolveTrackingMode(row),
     archived: row.archived,
+    logged_fields: toStringArray(row.logged_field_defs),
     settings_fields: toSettingsFields(row.settings_fields),
   };
 }
@@ -239,49 +223,11 @@ function mapDefaults(row: PwaDefaults, timestamp: string) {
   };
 }
 
-type SetMeasures = Pick<
+function measuresForLog(mode: TrackingMode, values: Record<string, unknown>): Pick<
   SetEntry,
-  "weight_kg" | "reps" | "added_weight_kg" | "seconds" | "meters"
->;
-
-function measuresForLog(mode: TrackingMode, values: Record<string, unknown>): SetMeasures {
-  const empty: SetMeasures = {
-    weight_kg: null,
-    reps: null,
-    added_weight_kg: null,
-    seconds: null,
-    meters: null,
-  };
-
-  const weight = toFiniteNumber(values.weight);
-  const reps = toFiniteNumber(values.reps);
-  const distance = toFiniteNumber(values.distance);
-  const time = toFiniteNumber(values.time);
-
-  switch (mode) {
-    case "resistance":
-      return {
-        ...empty,
-        weight_kg: weight === null ? null : lbToKg(weight),
-        reps: reps === null ? null : Math.trunc(reps),
-      };
-    case "bodyweight":
-      return {
-        ...empty,
-        reps: reps === null ? null : Math.trunc(reps),
-      };
-    case "duration":
-      return {
-        ...empty,
-        seconds: time === null ? null : minutesToSeconds(time),
-      };
-    case "distance":
-      return {
-        ...empty,
-        meters: distance === null ? null : milesToMeters(distance),
-        seconds: time === null ? null : minutesToSeconds(time),
-      };
-  }
+  "weight_kg" | "reps" | "added_weight_kg" | "seconds" | "meters" | "extra_values"
+> {
+  return measuresFromParsed(mode, values);
 }
 
 function routineDayIdForLogs(

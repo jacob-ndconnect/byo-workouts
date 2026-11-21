@@ -19,9 +19,10 @@ A movement the person can log.
 | `name` | What they see in the list. |
 | `tracking_mode` | Which measures a set of this exercise uses: `resistance` (barbell, dumbbell, cable, machine), `bodyweight`, `duration`, or `distance`. |
 | `archived` | Hidden from use, still in history. |
+| `logged_fields` | Ordered form field names. Empty means the default list for `tracking_mode`. Imported PWA `logged_field_defs` are copied here. |
 | `settings_fields` | Setup that stays put between sets, such as seat position or a pin. A map of strings. |
 
-The PWA's `type` (`machine`, `other`, `cardio`) and `logged_field_defs` are not fields here. The mode decides the measures. Phase 3 maps `machine` to `resistance`, a cardio entry that has a distance to `distance`, and a time-only cardio entry to `duration`.
+The PWA's `type` (`machine`, `other`, `cardio`) stays in `extensions.pwa` for display rules such as machine-style weight/sets/reps forms. Phase 3 maps `machine` to `resistance`, a cardio entry that has a distance to `distance`, and a time-only cardio entry to `duration`.
 
 ## routines
 
@@ -82,6 +83,7 @@ One performed effort. A screen can still offer "4 × 8" and write four identical
 | `meters` | Distance for `distance`. |
 | `kind` | `warmup`, `work`, `drop`, or `failure`. Null when unmarked. |
 | `note` | Optional note on this set. |
+| `extra_values` | Custom log fields (incline, band resistance, and so on). Null when there are none. |
 
 ## defaults
 

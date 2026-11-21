@@ -129,6 +129,40 @@ function readSetKind(value: unknown): SetKind | null {
   throw new InvalidRecordError("kind must be warmup, work, drop, failure, or null");
 }
 
+function readStringArray(value: unknown, key: string): string[] {
+  if (!Array.isArray(value)) {
+    throw new InvalidRecordError(`${key} must be an array of strings`);
+  }
+  const result: string[] = [];
+  for (const entry of value) {
+    if (typeof entry !== "string" || entry.trim() === "") {
+      throw new InvalidRecordError(`${key} entries must be non-empty strings`);
+    }
+    result.push(entry.trim());
+  }
+  return result;
+}
+
+function readExtraValues(value: unknown): Record<string, number | string> | null {
+  if (value === null) return null;
+  if (typeof value !== "object" || Array.isArray(value)) {
+    throw new InvalidRecordError("extra_values must be an object or null");
+  }
+  const result: Record<string, number | string> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (typeof entry === "number" && Number.isFinite(entry)) {
+      result[key] = entry;
+      continue;
+    }
+    if (typeof entry === "string") {
+      result[key] = entry;
+      continue;
+    }
+    throw new InvalidRecordError(`extra_values.${key} must be a number or string`);
+  }
+  return Object.keys(result).length === 0 ? null : result;
+}
+
 function readSettings(value: unknown): Record<string, string> {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw new InvalidRecordError("settings_fields must be an object of strings");
@@ -169,6 +203,12 @@ function exerciseFields(input: Record<string, unknown>, partial: boolean) {
     fields.archived = readBoolean(
       partial ? input.archived : readRequired(input, "archived"),
       "archived",
+    );
+  }
+  if (!partial || present(input, "logged_fields")) {
+    fields.logged_fields = readStringArray(
+      partial ? input.logged_fields : readRequired(input, "logged_fields"),
+      "logged_fields",
     );
   }
   if (!partial || present(input, "settings_fields")) {
@@ -289,6 +329,7 @@ function setFields(input: Record<string, unknown>, partial: boolean) {
   take("meters", (value) => readNullableNumber(value, "meters"));
   take("kind", readSetKind);
   take("note", readNote);
+  take("extra_values", readExtraValues);
   return fields;
 }
 

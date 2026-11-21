@@ -21,6 +21,7 @@ const AppDarkTheme = {
   colors: {
     ...DarkTheme.colors,
     primary: brandPrimaryDark,
+    text: "#FFFFFF",
   },
 };
 
@@ -33,10 +34,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="workout/[dayId]"
-          options={{
-            headerBackTitle: "Home",
-            presentation: "card",
-          }}
+          options={{ headerShown: false, presentation: "card" }}
         />
       </Stack>
     </ThemeProvider>

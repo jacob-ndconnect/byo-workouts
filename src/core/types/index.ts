@@ -22,6 +22,11 @@ export type Exercise = RecordBase & {
   name: string;
   tracking_mode: TrackingMode;
   archived: boolean;
+  /**
+   * Ordered log form fields. Empty means the default fields for `tracking_mode`.
+   * Imported PWA defs are copied here from `extensions.pwa.logged_field_defs`.
+   */
+  logged_fields: string[];
   /** Machine setup that does not change set to set, such as seat or pin. */
   settings_fields: Record<string, string>;
 };
@@ -70,6 +75,8 @@ export type SetEntry = RecordBase & {
   meters: number | null;
   kind: SetKind | null;
   note: string | null;
+  /** Custom log fields such as incline. Null when there are none. */
+  extra_values: Record<string, number | string> | null;
 };
 
 /** Prefill for a new resistance set. One row is enough; the id is still a normal record. */

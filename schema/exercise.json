@@ -12,12 +12,16 @@
           "enum": ["resistance", "bodyweight", "duration", "distance"]
         },
         "archived": { "type": "boolean" },
+        "logged_fields": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
         "settings_fields": {
           "type": "object",
           "additionalProperties": { "type": "string" }
         }
       },
-      "required": ["name", "tracking_mode", "archived", "settings_fields"]
+      "required": ["name", "tracking_mode", "archived", "logged_fields", "settings_fields"]
     }
   ]
 }

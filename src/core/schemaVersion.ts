@@ -1,2 +1,2 @@
 /** major.minor. Minor is an additive change. */
-export const SCHEMA_VERSION = "1.0";
+export const SCHEMA_VERSION = "1.1";

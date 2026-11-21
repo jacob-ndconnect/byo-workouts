@@ -27,6 +27,7 @@ describe("export round-trip", () => {
       name: "Bench",
       tracking_mode: "resistance",
       archived: false,
+      logged_fields: [],
       settings_fields: {},
       extensions: { "example.app": { note: "keep me" } },
     });

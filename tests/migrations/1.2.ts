@@ -1,10 +1,10 @@
 import type { Migration } from "@/data/migrations/types";
 
 /** Test-only migration. Never ship in appMigrations. */
-export const migration11: Migration = {
-  version: "1.1",
+export const migration12: Migration = {
+  version: "1.2",
   sql: `
 ALTER TABLE defaults ADD COLUMN migration_probe TEXT;
-UPDATE meta SET schema_version = '1.1' WHERE id = 1;
+UPDATE meta SET schema_version = '1.2' WHERE id = 1;
 `,
 };

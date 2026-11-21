@@ -40,6 +40,31 @@ function sortById<C extends Collection>(rows: Records[C][]): Records[C][] {
   return [...rows].sort((a, b) => a.id.localeCompare(b.id));
 }
 
+/** Fills schema 1.1 fields when importing a 1.0 export file. */
+function patchLegacyImportRow(collection: Collection, row: unknown): unknown {
+  if (row === null || typeof row !== "object" || Array.isArray(row)) {
+    return row;
+  }
+  const obj = { ...(row as Record<string, unknown>) };
+  if (collection === "exercises" && !Object.hasOwn(obj, "logged_fields")) {
+    let fields: string[] = [];
+    const extensions = obj.extensions;
+    if (extensions && typeof extensions === "object" && !Array.isArray(extensions)) {
+      const pwa = (extensions as { pwa?: { logged_field_defs?: unknown } }).pwa;
+      if (pwa && Array.isArray(pwa.logged_field_defs)) {
+        fields = pwa.logged_field_defs.filter(
+          (entry): entry is string => typeof entry === "string",
+        );
+      }
+    }
+    obj.logged_fields = fields;
+  }
+  if (collection === "sets" && !Object.hasOwn(obj, "extra_values")) {
+    obj.extra_values = null;
+  }
+  return obj;
+}
+
 export async function exportDocument(
   repo: Repository,
   exportedAt: string,
@@ -61,9 +86,9 @@ export async function exportDocument(
 export function parseExportDocument(raw: unknown): ExportDocument {
   const obj = asObject(raw);
   const schema_version = readString(obj.schema_version, "schema_version");
-  if (schema_version !== SCHEMA_VERSION) {
+  if (schema_version !== SCHEMA_VERSION && schema_version !== "1.0") {
     throw new ExportFormatError(
-      `Unsupported schema_version "${schema_version}" (expected ${SCHEMA_VERSION})`,
+      `Unsupported schema_version "${schema_version}" (expected ${SCHEMA_VERSION} or 1.0)`,
     );
   }
 
@@ -77,7 +102,7 @@ export function parseExportDocument(raw: unknown): ExportDocument {
   const payload = {} as ReplaceAllPayload;
   for (const collection of COLLECTIONS) {
     const rows = readCollectionArray(obj[collection], collection).map((row) =>
-      sanitizeStoredRecord(collection, row),
+      sanitizeStoredRecord(collection, patchLegacyImportRow(collection, row)),
     );
     setReplaceAllCollection(payload, collection, sortById(rows));
   }

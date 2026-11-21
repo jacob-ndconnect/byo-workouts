@@ -39,6 +39,17 @@
         },
         "note": {
           "oneOf": [{ "type": "null" }, { "type": "string" }]
+        },
+        "extra_values": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [{ "type": "number" }, { "type": "string" }]
+              }
+            }
+          ]
         }
       },
       "required": [
@@ -53,7 +64,8 @@
         "seconds",
         "meters",
         "kind",
-        "note"
+        "note",
+        "extra_values"
       ]
     }
   ]

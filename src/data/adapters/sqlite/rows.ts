@@ -41,6 +41,7 @@ export function rowToRecord<C extends Collection>(
         name: row.name as string,
         tracking_mode: row.tracking_mode as Records["exercises"]["tracking_mode"],
         archived: decodeBool(row.archived as number),
+        logged_fields: JSON.parse(row.logged_fields as string) as string[],
         settings_fields: JSON.parse(row.settings_fields as string) as Record<string, string>,
       } as Records[C];
     case "routines":
@@ -87,6 +88,10 @@ export function rowToRecord<C extends Collection>(
         meters: (row.meters as number | null) ?? null,
         kind: (row.kind as Records["sets"]["kind"]) ?? null,
         note: (row.note as string | null) ?? null,
+        extra_values: decodeJson((row.extra_values as string | null) ?? null) as Record<
+          string,
+          number | string
+        > | null,
       } as Records[C];
     case "defaults":
       return {
@@ -113,6 +118,7 @@ export function recordToRow<C extends Collection>(collection: C, record: Records
         name: r.name,
         tracking_mode: r.tracking_mode,
         archived: encodeBool(r.archived),
+        logged_fields: JSON.stringify(r.logged_fields),
         settings_fields: JSON.stringify(r.settings_fields),
       };
     }
@@ -169,6 +175,7 @@ export function recordToRow<C extends Collection>(collection: C, record: Records
         meters: r.meters,
         kind: r.kind,
         note: r.note,
+        extra_values: encodeJson(r.extra_values),
       };
     }
     case "defaults": {

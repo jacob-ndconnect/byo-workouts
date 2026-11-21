@@ -2,7 +2,7 @@
 
 The order of work, with what "done" means for each phase. Each phase should leave the app in a state you can run and use. Decisions that are still open are listed in `DECISIONS.md` Part 2. Anything in the "later" phases stays out of the code until its phase starts.
 
-Current phase: **4** (slice **4.1** done — native shell and home; see below).
+Current phase: **4** (next slice: **4.3** — history list, edit/delete).
 
 ---
 
@@ -86,12 +86,50 @@ Work in **slices**. Each slice should leave the app runnable on device.
 **Not in this slice**
 - Real workout logging, history, or settings editors. Overlays use native stack / `formSheet` when those flows land (no JS drawer library).
 
-### Slice 4.2 — Next (pick in a fresh plan)
+### Slice 4.2 — Mid-workout logging (done)
+
+**Shipped**
+- Workout stack under `workout/[dayId]`: session list, exercise screen, `formSheet` flows for log, add exercise, and machine settings (`SheetScaffold`, `fitToContents` sheets).
+- **Finish workout** is a native confirmation alert (Cancel / destructive **Finish**), not a sheet.
+- Real `workouts` sessions (resume open, finish starts new). Progress and Next use sets on the current workout only.
+- Schema **1.1**: `exercises.logged_fields`, `sets.extra_values` (PWA custom fields such as incline).
+- iOS session chrome: chevron back, routine subheader, native `...` menu (no selection checkmarks), nested-stack swipe back to the exercise list, floating primary actions without broken blur modules.
+
+**PWA reference:** mid-workout flows in `workout-tracker` (day list, per-exercise log, add exercise).
+
+### Slice 4.3 — History (next)
+
+**Goal:** Replace the History tab stub with a real list of logged sets, with edit and delete through native form sheets (same sheet patterns as Slice 4.2).
+
+**Parity target (PWA)** — use these as the feature checklist when planning:
+
+| Area | `workout-tracker` |
+|------|-------------------|
+| List + sort | `app/(app)/history/page.tsx`, `components/history/workout-history-table.tsx` |
+| Edit overlay | `components/history/workout-history-edit-overlay.tsx` |
+| Data + mutations | `lib/actions/history.ts` (`getWorkoutHistory`, `updateWorkoutLog`, `deleteWorkoutLog`) |
+| Sort/format helpers | `lib/workout/history.ts` |
+
+**Likely app work (to confirm in planning)**
+
+- **Data:** List `sets` (and related `exercises` / `workouts` for labels) via `openRepository()` only — no adapter imports in UI. Soft-delete for remove. Edits set `logged_at` and measure fields consistently with mid-workout `logExercise` / schema 1.1 `extra_values`.
+- **UI:** `src/app/(tabs)/history/` — grouped or flat list, sort control matching PWA options where it still makes sense on phone.
+- **Sheets:** Edit route(s) under the History stack (or tab-local stack) reusing log-field resolution from `src/core/logic/logFields` and formatting from workout logging.
+- **Delete:** Confirmation alert (same pattern as finish workout), then repository delete.
+- **Home week strip:** Refresh or invalidate when history changes if it reads the same aggregates.
+
+**Explicitly later (other slices)**
+
+- Export-from-history button lives on PWA History; device JSON/CSV export UI can stay in **settings polish** unless you want it in 4.3.
+- Routines/exercises library editors → slice after history.
+- Trends/analytics beyond list/edit/delete.
+
+### Remaining phase 4 slices (after 4.3)
 
 Suggested order by gym value (adjust as you like):
 
-1. **Mid-workout logging** — exercise list, log overlay as native sheet, finish session (reference `workout-tracker` under `/workout`).
-2. **History** — list, edit/delete via sheets.
+1. ~~**Mid-workout logging**~~ (4.2, done).
+2. ~~**History**~~ (4.3, current).
 3. **Routines and exercises** — library, routine editor, defaults; still one Settings entry each unless you split tabs later.
 4. **Settings polish** — export UI, responsive iPad sidebar (native tabs already support `sidebarAdaptable`).
 

@@ -20,6 +20,7 @@ export const exercises = sqliteTable("exercises", {
   name: text("name").notNull(),
   tracking_mode: text("tracking_mode").notNull(),
   archived: integer("archived").notNull(),
+  logged_fields: text("logged_fields").notNull(),
   settings_fields: text("settings_fields").notNull(),
 });
 
@@ -66,6 +67,7 @@ export const sets = sqliteTable("sets", {
   meters: real("meters"),
   kind: text("kind"),
   note: text("note"),
+  extra_values: text("extra_values"),
 });
 
 export const defaults = sqliteTable("defaults", {
