@@ -1,5 +1,5 @@
 import { Button, ContextMenu, RNHostView, SwipeActions } from "@expo/ui/swift-ui";
-import { labelStyle, tint } from "@expo/ui/swift-ui/modifiers";
+import { buttonStyle, labelStyle, tint } from "@expo/ui/swift-ui/modifiers";
 import { type ReactNode } from "react";
 import { View } from "react-native";
 
@@ -10,6 +10,8 @@ type SettingsActionRowProps = {
   menu: SettingsRowAction[];
   leading?: SettingsRowAction;
   trailing?: SettingsRowAction;
+  /** Tap the row. Used when the row itself opens an editor. */
+  onPress?: () => void;
   children: ReactNode;
 };
 
@@ -36,14 +38,24 @@ function SwipeButton({ action, color }: { action: SettingsRowAction; color: stri
   );
 }
 
-export function SettingsActionRow({ menu, leading, trailing, children }: SettingsActionRowProps) {
+export function SettingsActionRow({ menu, leading, trailing, onPress, children }: SettingsActionRowProps) {
+  const face = (
+    <RNHostView matchContents={{ vertical: true }}>
+      <View>{children}</View>
+    </RNHostView>
+  );
+
   return (
     <SwipeActions>
       <ContextMenu>
         <ContextMenu.Trigger>
-          <RNHostView matchContents={{ vertical: true }}>
-            <View>{children}</View>
-          </RNHostView>
+          {onPress ? (
+            <Button onPress={onPress} modifiers={[buttonStyle("plain")]}>
+              {face}
+            </Button>
+          ) : (
+            face
+          )}
         </ContextMenu.Trigger>
         <ContextMenu.Items>
           {menu.map((item) => (

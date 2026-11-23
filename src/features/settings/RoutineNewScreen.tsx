@@ -6,9 +6,20 @@ import { markRoutinesDirty } from "@/features/settings/libraryDirty";
 import { createRoutine } from "@/features/settings/settingsRoutines";
 import { Stack, useRouter, useTheme } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, StyleSheet, Text, TextInput, View } from "react-native";
 
 export function RoutineNewScreen() {
+  if (Platform.OS === "ios") {
+    const { RoutineNewScreen: IOSForm } =
+      // SwiftUI is iOS-only. A static import would be pulled into the web bundle.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("./RoutineNewScreen.ios") as typeof import("./RoutineNewScreen.ios");
+    return <IOSForm />;
+  }
+  return <RoutineNewFallback />;
+}
+
+function RoutineNewFallback() {
   const theme = useTheme();
   const router = useRouter();
   const [name, setName] = useState("");

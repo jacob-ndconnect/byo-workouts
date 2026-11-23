@@ -20,8 +20,8 @@ import { Stack, useLocalSearchParams, useRouter, useTheme } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -47,6 +47,17 @@ function settingsToPairs(settings: Record<string, string>) {
 }
 
 export function ExerciseFormScreen() {
+  if (Platform.OS === "ios") {
+    const { ExerciseFormScreen: IOSForm } =
+      // SwiftUI is iOS-only. A static import would be pulled into the web bundle.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("./ExerciseFormScreen.ios") as typeof import("./ExerciseFormScreen.ios");
+    return <IOSForm />;
+  }
+  return <ExerciseFormFallback />;
+}
+
+function ExerciseFormFallback() {
   const theme = useTheme();
   const router = useRouter();
   const { exerciseId } = useLocalSearchParams<{ exerciseId?: string }>();
@@ -146,7 +157,7 @@ export function ExerciseFormScreen() {
           />
         }
       >
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scroll}>
+        <View style={styles.scroll}>
           <View style={styles.field}>
             <Text style={[styles.label, { color: mutedLabel(theme) }]}>Name</Text>
             <TextInput
@@ -211,7 +222,7 @@ export function ExerciseFormScreen() {
             {settingsPairs.map((pair, index) => (
               <View key={index} style={styles.row}>
                 <TextInput
-                  placeholder="Key"
+                  placeholder="Label"
                   style={[styles.input, styles.pair, { color: theme.colors.text, borderColor: mutedLabel(theme) }]}
                   value={pair.key}
                   onChangeText={(key) =>
@@ -237,7 +248,7 @@ export function ExerciseFormScreen() {
           </View>
 
           {error ? <Text style={{ color: theme.colors.notification }}>{error}</Text> : null}
-        </ScrollView>
+        </View>
       </SheetScaffold>
     </>
   );

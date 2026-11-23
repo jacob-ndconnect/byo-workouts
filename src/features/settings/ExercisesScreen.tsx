@@ -211,6 +211,7 @@ export function ExercisesScreen() {
                   <SettingsActionRow
                     key={exercise.id}
                     menuTitle={exercise.name}
+                    onPress={showArchived ? undefined : onEdit}
                     leading={
                       showArchived
                         ? undefined

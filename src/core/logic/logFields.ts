@@ -49,7 +49,9 @@ export function heroFieldName(fields: string[], exercise: Exercise): string | nu
   return fields[0] ?? null;
 }
 
+/** Turns a stored key into a label. `seat_position` reads as "Seat position". */
 export function formatFieldLabel(field: string): string {
   if (!field) return field;
-  return field.charAt(0).toUpperCase() + field.slice(1);
+  const words = field.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }

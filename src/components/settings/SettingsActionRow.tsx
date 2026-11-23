@@ -8,6 +8,8 @@ type SettingsActionRowProps = {
   menu: SettingsRowAction[];
   leading?: SettingsRowAction;
   trailing?: SettingsRowAction;
+  /** Tap the row. Used when the row itself opens an editor. */
+  onPress?: () => void;
   children: ReactNode;
 };
 
@@ -16,12 +18,15 @@ export function SettingsActionRow({
   menu,
   leading,
   trailing,
+  onPress,
   children,
 }: SettingsActionRowProps) {
   return (
     <SettingsSwipeRow leading={leading} trailing={trailing} iconOnly>
       <Pressable
+        accessibilityRole={onPress ? "button" : undefined}
         accessibilityHint="Long press for actions"
+        onPress={onPress}
         onLongPress={() => {
           Alert.alert(menuTitle, undefined, [
             ...menu.map((item) => ({

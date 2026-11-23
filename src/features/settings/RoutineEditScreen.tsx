@@ -23,6 +23,7 @@ import {
   ActivityIndicator,
   FlatList,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -48,6 +49,17 @@ function assembledToForm(days: AssembledRoutineDay[]): FormDay[] {
 }
 
 export function RoutineEditScreen() {
+  if (Platform.OS === "ios") {
+    const { RoutineEditScreen: IOSForm } =
+      // SwiftUI is iOS-only. A static import would be pulled into the web bundle.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("./RoutineEditScreen.ios") as typeof import("./RoutineEditScreen.ios");
+    return <IOSForm />;
+  }
+  return <RoutineEditFallback />;
+}
+
+function RoutineEditFallback() {
   const theme = useTheme();
   const { id: routineId } = useLocalSearchParams<{ id: string }>();
   const [viewMode, setViewMode] = useState<ViewMode>("gui");

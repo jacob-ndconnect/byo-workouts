@@ -173,6 +173,7 @@ export function RoutinesScreen() {
                 <SettingsActionRow
                   key={routine.id}
                   menuTitle={routine.name}
+                  onPress={showArchived ? undefined : onEdit}
                   leading={
                     showArchived
                       ? undefined
