@@ -19,7 +19,7 @@ export function SettingsActionRow({
   children,
 }: SettingsActionRowProps) {
   return (
-    <SettingsSwipeRow leading={leading} trailing={trailing}>
+    <SettingsSwipeRow leading={leading} trailing={trailing} iconOnly>
       <Pressable
         accessibilityHint="Long press for actions"
         onLongPress={() => {

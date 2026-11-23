@@ -1,11 +1,20 @@
+import { pickOpenWorkout } from "@/core/logic/openWorkout";
 import type { SessionExercise, SessionSetLog } from "@/core/logic/sessionQueue";
-import type { Exercise, RoutineDayExercise, SetEntry, Workout } from "@/core/types";
+import type {
+  Exercise,
+  Routine,
+  RoutineDay,
+  RoutineDayExercise,
+  SetEntry,
+  Workout,
+} from "@/core/types";
 import type { Repository } from "@/data/repository";
 
 import { ensureOpenWorkout } from "./ensureOpenWorkout";
 
 export type WorkoutSessionData = {
-  workout: Workout;
+  /** Null until this day has an open workout. The exercise lists are still complete. */
+  workout: Workout | null;
   dayId: string;
   dayName: string;
   routineName: string;
@@ -13,6 +22,17 @@ export type WorkoutSessionData = {
   routineExercises: SessionExercise[];
   otherExercises: SessionExercise[];
   sessionLogs: SessionSetLog[];
+};
+
+export type OpenWorkoutSessionData = WorkoutSessionData & { workout: Workout };
+
+export type WorkoutSessionTables = {
+  routines: Routine[];
+  routineDays: RoutineDay[];
+  slots: RoutineDayExercise[];
+  exercises: Exercise[];
+  sets: SetEntry[];
+  workouts: Workout[];
 };
 
 function toSessionExercise(
@@ -48,49 +68,41 @@ function sessionLogsFromSets(
   }));
 }
 
-export async function getWorkoutSessionData(
-  repo: Repository,
-  dayId: string,
-): Promise<WorkoutSessionData> {
-  const day = await repo.get("routine_days", dayId);
-  if (!day) {
-    throw new Error("Workout day not found");
-  }
-
-  const routine = await repo.get("routines", day.routine_id);
-  if (!routine?.active || routine.archived) {
-    throw new Error("Workout day is not part of the active routine");
-  }
-
-  const [
-    routineDays,
-    daySlots,
-    allSlots,
-    exercises,
-    allSets,
-  ] = await Promise.all([
+export async function readWorkoutSessionTables(repo: Repository): Promise<WorkoutSessionTables> {
+  const [routines, routineDays, slots, exercises, sets, workouts] = await Promise.all([
+    repo.list("routines"),
     repo.list("routine_days"),
-    repo.list("routine_day_exercises"),
     repo.list("routine_day_exercises"),
     repo.list("exercises"),
     repo.list("sets"),
+    repo.list("workouts"),
   ]);
+  return { routines, routineDays, slots, exercises, sets, workouts };
+}
 
-  const exerciseById = new Map(exercises.map((row) => [row.id, row]));
+/** Build one day's session from tables already in memory. Null when the day is not active. */
+export function sessionFromTables(
+  tables: WorkoutSessionTables,
+  dayId: string,
+  workout: Workout | null,
+): WorkoutSessionData | null {
+  const day = tables.routineDays.find((row) => row.id === dayId);
+  if (!day) return null;
+  const routine = tables.routines.find((row) => row.id === day.routine_id);
+  if (!routine?.active || routine.archived) return null;
+
+  const exerciseById = new Map(tables.exercises.map((row) => [row.id, row]));
   const routineDayIds = new Set(
-    routineDays.filter((row) => row.routine_id === routine.id).map((row) => row.id),
+    tables.routineDays.filter((row) => row.routine_id === routine.id).map((row) => row.id),
   );
 
-  const workout = await ensureOpenWorkout(repo, dayId);
-  const workoutSets = allSets.filter((set) => set.workout_id === workout.id);
-
-  const dayExercises = daySlots
+  const dayExercises = tables.slots
     .filter((slot) => slot.routine_day_id === dayId)
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((slot) => toSessionExercise(slot, exerciseById))
     .filter((entry): entry is SessionExercise => entry !== null);
 
-  const routineSlots = allSlots
+  const routineSlots = tables.slots
     .filter((slot) => routineDayIds.has(slot.routine_day_id) && slot.routine_day_id !== dayId)
     .sort((a, b) => a.sort_order - b.sort_order);
 
@@ -112,7 +124,7 @@ export async function getWorkoutSessionData(
     ...routineExercises.map((entry) => entry.exerciseId),
   ]);
 
-  const otherExercises: SessionExercise[] = exercises
+  const otherExercises: SessionExercise[] = tables.exercises
     .filter((exercise) => !exercise.archived && !plannedIds.has(exercise.id))
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((exercise) => ({
@@ -120,6 +132,10 @@ export async function getWorkoutSessionData(
       name: exercise.name,
       routineDayExerciseId: null,
     }));
+
+  const workoutSets = workout
+    ? tables.sets.filter((set) => set.workout_id === workout.id)
+    : [];
 
   return {
     workout,
@@ -131,4 +147,23 @@ export async function getWorkoutSessionData(
     otherExercises,
     sessionLogs: sessionLogsFromSets(workoutSets, exerciseById),
   };
+}
+
+export async function getWorkoutSessionData(
+  repo: Repository,
+  dayId: string,
+): Promise<OpenWorkoutSessionData> {
+  const tables = await readWorkoutSessionTables(repo);
+  const day = tables.routineDays.find((row) => row.id === dayId);
+  if (!day) throw new Error("Workout day not found");
+  const routine = tables.routines.find((row) => row.id === day.routine_id);
+  if (!routine?.active || routine.archived) {
+    throw new Error("Workout day is not part of the active routine");
+  }
+
+  const existing = pickOpenWorkout(tables.workouts, dayId);
+  const workout = existing ?? (await ensureOpenWorkout(repo, dayId));
+  const session = sessionFromTables(tables, dayId, workout);
+  if (!session?.workout) throw new Error("Workout day not found");
+  return session as OpenWorkoutSessionData;
 }

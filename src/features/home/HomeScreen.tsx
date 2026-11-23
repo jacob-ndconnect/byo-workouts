@@ -7,6 +7,11 @@ import {
   getHomeScreenData,
   type HomeScreenData,
 } from "@/features/home/getHomeScreenData";
+import {
+  invalidateWorkoutSessionCache,
+  loadWorkoutSession,
+  preloadWorkoutSessions,
+} from "@/features/workout/workoutSessionCache";
 import { Stack, useFocusEffect, useRouter, useTheme } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -28,9 +33,11 @@ export function HomeScreen() {
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
+    invalidateWorkoutSessionCache();
     void getHomeScreenData(openRepository())
       .then((result) => {
         setData(result);
+        void preloadWorkoutSessions(openRepository());
       })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : "Failed to load home");
@@ -130,7 +137,10 @@ export function HomeScreen() {
                     key={day.id}
                     day={day}
                     isNext={data.nextDay?.id === day.id}
-                    onPress={() => router.push(`/workout/${day.id}`)}
+                    onPress={() => {
+                      void loadWorkoutSession(day.id);
+                      router.push(`/workout/${day.id}`);
+                    }}
                   />
                 ))}
               </View>

@@ -179,9 +179,9 @@ export function DefaultsScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: 16, gap: 12, paddingBottom: 40 },
+  scroll: { padding: 16, gap: 8, paddingBottom: 40 },
   helper: { fontSize: 14, lineHeight: 20 },
-  gui: { gap: 12 },
+  gui: { gap: 8 },
   formRow: { paddingHorizontal: 16, paddingVertical: 12, gap: 6 },
   rowLabel: { fontSize: 13 },
   rowInput: { fontSize: 17 },

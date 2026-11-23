@@ -2,7 +2,7 @@ import { groupedSurface, mutedLabel } from "@/constants/themeColors";
 import { GlassView, isGlassEffectAPIAvailable } from "expo-glass-effect";
 import { useTheme } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -22,6 +22,9 @@ type SegmentedControlProps<T extends string> = {
   value: T;
   onChange: (value: T) => void;
   accessibilityLabel?: string;
+  /** Hug the labels. Use beside a control that takes the remaining width. */
+  hug?: boolean;
+  style?: StyleProp<ViewStyle>;
 };
 
 const SLIDE = { duration: 220, easing: Easing.out(Easing.cubic) };
@@ -32,6 +35,8 @@ export function SegmentedControl<T extends string>({
   value,
   onChange,
   accessibilityLabel,
+  hug,
+  style,
 }: SegmentedControlProps<T>) {
   const theme = useTheme();
   const glass = isGlassEffectAPIAvailable();
@@ -81,11 +86,12 @@ export function SegmentedControl<T extends string>({
                 return { ...current, [option.value]: { x, width } };
               });
             }}
-            style={styles.segment}
+            style={[styles.segment, hug && styles.segmentHug]}
             accessibilityRole="tab"
             accessibilityState={{ selected }}
           >
             <Text
+              numberOfLines={1}
               style={[
                 styles.label,
                 { color: selected ? theme.colors.text : inactive },
@@ -106,7 +112,7 @@ export function SegmentedControl<T extends string>({
         isInteractive
         glassEffectStyle="regular"
         colorScheme={theme.dark ? "dark" : "light"}
-        style={styles.track}
+        style={[styles.track, hug ? styles.trackHug : styles.trackFill, style]}
         accessibilityRole="tablist"
         accessibilityLabel={accessibilityLabel}
       >
@@ -117,7 +123,13 @@ export function SegmentedControl<T extends string>({
 
   return (
     <View
-      style={[styles.track, styles.flatTrack, { backgroundColor: groupedSurface(theme) }]}
+      style={[
+        styles.track,
+        styles.flatTrack,
+        hug ? styles.trackHug : styles.trackFill,
+        { backgroundColor: groupedSurface(theme) },
+        style,
+      ]}
       accessibilityRole="tablist"
       accessibilityLabel={accessibilityLabel}
     >
@@ -131,7 +143,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 999,
     padding: INSET,
+  },
+  trackFill: {
+    alignSelf: "stretch",
+    width: "100%",
+  },
+  trackHug: {
     alignSelf: "flex-start",
+    flexGrow: 0,
   },
   flatTrack: {
     borderRadius: 9,
@@ -145,12 +164,16 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   segment: {
+    flexGrow: 1,
+    flexShrink: 0,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999,
-    minWidth: 72,
     alignItems: "center",
     zIndex: 1,
+  },
+  segmentHug: {
+    flexGrow: 0,
   },
   label: {
     fontSize: 15,

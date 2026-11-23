@@ -1,4 +1,5 @@
 import { SettingsActionList } from "@/components/settings/SettingsActionList";
+import { SETTINGS_LIST_PICKER_GAP } from "@/components/settings/settingsListLayout";
 import { SettingsActionRow } from "@/components/settings/SettingsActionRow";
 import { SegmentedControl, SegmentFade } from "@/components/settings/SegmentedControl";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
@@ -137,9 +138,10 @@ export function ExercisesScreen() {
               : [],
         }}
       />
-      <View style={[styles.screen, { paddingTop: headerHeight + 8 }]}>
+      <View style={[styles.screen, { paddingTop: headerHeight + 2 }]}>
         <View style={styles.controls}>
           <SegmentedControl
+            style={styles.segmentFill}
             accessibilityLabel="Exercise archive filter"
             options={[
               { value: "active", label: "Active" },
@@ -156,6 +158,7 @@ export function ExercisesScreen() {
             }}
           />
           <SegmentedControl
+            hug
             accessibilityLabel="Editor mode"
             options={[
               { value: "gui", label: "Form" },
@@ -283,9 +286,10 @@ export function ExercisesScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, gap: 12 },
+  screen: { flex: 1, gap: SETTINGS_LIST_PICKER_GAP },
   pane: { flex: 1 },
-  controls: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16 },
+  controls: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16 },
+  segmentFill: { flexGrow: 1, flexShrink: 1 },
   status: { fontSize: 14, paddingHorizontal: 20 },
   warnings: { gap: 4, paddingHorizontal: 20 },
   loader: { marginTop: 24 },

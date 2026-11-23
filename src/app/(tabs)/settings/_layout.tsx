@@ -19,6 +19,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="routines/[id]" options={{ title: "Edit routine" }} />
       <Stack.Screen name="defaults" options={{ title: "Defaults" }} />
       <Stack.Screen name="import" options={{ title: "Import data" }} />
+      <Stack.Screen name="export" options={{ title: "Export data" }} />
       <Stack.Screen name="connection" options={{ title: "Connection" }} />
     </Stack>
   );

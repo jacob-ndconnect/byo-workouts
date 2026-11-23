@@ -1,5 +1,5 @@
-import { Button, ContextMenu, Image, RNHostView, SwipeActions, Text, VStack } from "@expo/ui/swift-ui";
-import { font, foregroundStyle, tint } from "@expo/ui/swift-ui/modifiers";
+import { Button, ContextMenu, RNHostView, SwipeActions } from "@expo/ui/swift-ui";
+import { labelStyle, tint } from "@expo/ui/swift-ui/modifiers";
 import { type ReactNode } from "react";
 import { View } from "react-native";
 
@@ -20,20 +20,19 @@ function SwipeButton({ action, color }: { action: SettingsRowAction; color: stri
         label={action.label}
         systemImage={action.systemImage}
         role="destructive"
+        modifiers={[labelStyle("iconOnly")]}
         onPress={action.onPress}
       />
     );
   }
 
   return (
-    <Button onPress={action.onPress} modifiers={[tint(color)]}>
-      <VStack spacing={2}>
-        <Image systemName={action.systemImage} size={26} color="#FFFFFF" />
-        <Text modifiers={[font({ size: 12, weight: "semibold" }), foregroundStyle("#FFFFFF")]}>
-          {action.label}
-        </Text>
-      </VStack>
-    </Button>
+    <Button
+      label={action.label}
+      systemImage={action.systemImage}
+      onPress={action.onPress}
+      modifiers={[tint(color), labelStyle("iconOnly")]}
+    />
   );
 }
 

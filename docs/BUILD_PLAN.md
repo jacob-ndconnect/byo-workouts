@@ -2,7 +2,7 @@
 
 The order of work, with what "done" means for each phase. Each phase should leave the app in a state you can run and use. Decisions that are still open are listed in `DECISIONS.md` Part 2. Anything in the "later" phases stays out of the code until its phase starts.
 
-Current phase: **4** (next slice: **4.5** — settings polish).
+Current phase: **5** (Dogfood — phase 4 feature parity complete).
 
 ---
 
@@ -11,6 +11,7 @@ Current phase: **4** (next slice: **4.5** — settings polish).
 Get the scaffolded app running on your phone and the project docs in place. Follow `docs/SETUP.md`.
 
 **Done when**
+
 - The starter app opens on your iPhone in Expo Go, and in the browser with `w`.
 - LICENSE is Apache 2.0, and the docs are committed.
 - `npx expo-doctor` and `npx tsc --noEmit` pass.
@@ -23,6 +24,7 @@ Get the scaffolded app running on your phone and the project docs in place. Foll
 The seams that make sync, export, and the server possible later. All of it is plain TypeScript that can be tested without a device.
 
 **Build**
+
 - `src/config/identity.ts` with the bundle ID (`com.jacobestep.byo.workouts`) and the URL scheme (`byo-workouts`). `app.config.ts` reads them.
 - `src/core/ids.ts` (UUIDv7), `src/core/time.ts` (ISO 8601 UTC), `src/core/schemaVersion.ts` (`"1.0"`).
 - Record types in `src/core/types`. Every record gets `id`, `created_at`, `updated_at`, `deleted_at`, and a nullable `extensions`. A workout is a session. Sets under it store a tracking mode (`resistance`, `bodyweight`, `duration`, or `distance`) and the measures for that mode. Weights in kg, distances in meters, durations in seconds. See `docs/SCHEMA.md`.
@@ -32,6 +34,7 @@ The seams that make sync, export, and the server possible later. All of it is pl
 - The ESLint layer rules from `docs/STRUCTURE.md`.
 
 **Done when**
+
 - The contract tests pass against the memory adapter.
 - Linting fails on a `react-native` import inside `src/core` and on an adapter import inside `src/features`.
 - A short note in `docs/` lists each record type and why each field exists. This is the seed of the public schema. (`docs/SCHEMA.md`)
@@ -41,12 +44,14 @@ The seams that make sync, export, and the server possible later. All of it is pl
 ## Phase 2: SQLite storage
 
 **Build**
+
 - `expo-sqlite` and Drizzle (confirm the current Expo SQLite driver in Drizzle's docs before starting).
 - `src/data/adapters/sqlite`, with the schema and forward-only migrations in `src/data/migrations`.
 - A `meta` table holding the schema version.
 - Soft deletes and `updated_at` handled in the adapter, never in the UI.
 
 **Done when**
+
 - The same contract test suite passes against the SQLite adapter.
 - Data survives an app restart on your phone.
 - A migration from version 1.0 to a trivially changed 1.1 runs cleanly on a database with data in it.
@@ -56,12 +61,14 @@ The seams that make sync, export, and the server possible later. All of it is pl
 ## Phase 3: Export, import, and your existing data
 
 **Build**
+
 - `src/export`: export every record to the documented JSON format, and import the same format. Include `schema_version` and the app name in the file.
 - `schema/`: a JSON Schema for each record type, plus a sample export.
 - `scripts/pwa-export`: reads your Supabase data and writes it in the export format.
 - A round-trip test: export, wipe, import, compare.
 
 **Done when**
+
 - Your real workout history is imported into the new app with nothing lost.
 - Export, wipe, import gives identical data.
 - The schema files validate the sample export.
@@ -77,6 +84,7 @@ Work in **slices**. Each slice should leave the app runnable on device.
 ### Slice 4.1 — Native shell and home (done)
 
 **Shipped**
+
 - `expo-router/native-tabs`: **Home**, **History**, **Settings** (same three-tab pattern as the PWA; routines live under Settings).
 - Root stack pushes `workout/[dayId]` with the tab bar hidden mid-session.
 - Home reads local data: week strip, active routine, next-day highlight, day cards → workout stub.
@@ -84,11 +92,13 @@ Work in **slices**. Each slice should leave the app runnable on device.
 - PWA-aligned brand colors, card radius, and dark-mode text on grouped surfaces.
 
 **Not in this slice**
+
 - Real workout logging, history, or settings editors. Overlays use native stack / `formSheet` when those flows land (no JS drawer library).
 
 ### Slice 4.2 — Mid-workout logging (done)
 
 **Shipped**
+
 - Workout stack under `workout/[dayId]`: session list, exercise screen, `formSheet` flows for log, add exercise, and machine settings (`SheetScaffold`, `fitToContents` sheets).
 - **Finish workout** is a native confirmation alert (Cancel / destructive **Finish**), not a sheet.
 - Real `workouts` sessions (resume open, finish starts new). Progress and Next use sets on the current workout only.
@@ -100,48 +110,54 @@ Work in **slices**. Each slice should leave the app runnable on device.
 ### Slice 4.3 — History (done)
 
 **Shipped**
+
 - History lists one row per set (exercise, measures, date), sorted from a header menu (newest, oldest, exercise A–Z, Z–A).
 - Long-press menu: **Edit** and **Delete**. No trailing buttons. Delete confirms, then soft-deletes.
 - Edit is a `formSheet`: date and the exercise’s log fields (the sets count is omitted). Schema **1.2** adds `sets.logged_at` so the date can change without rewriting `created_at`. Home’s week strip reads `logged_at`.
 - Mid-workout **Sets** still means “write N identical set rows”; History shows each row. Same as PWA import behavior.
 
 **Not in this slice**
+
 - Export-from-history. Device export stays in settings polish.
 - Routine and exercise editors.
 
 ### Slice 4.4 — Routines and exercises (done)
 
 **Shipped**
+
 - Settings **Exercises**, **Routines**, and **Defaults** replace the stubs. Each manager has Active / Archived (where applicable), **Form** / **JSON** editors, and PWA-style save rules (JSON omits do not delete; form routine save removes omitted days/slots via soft-delete).
 - Exercises: list, archive, `formSheet` create/edit (`machine` / `other` / `cardio` via `extensions.pwa`), JSON bulk edit by name.
 - Routines: list, create (`formSheet`), set active (single active), archive, stack editor for days/slots/reorder, JSON by exercise name.
 - Defaults: sets/reps form and JSON; creates the row if missing.
 - Core planners: `src/core/logic/exerciseLibrary.ts`, `routineEditor.ts`; repository apply in `src/features/settings/settings*.ts`.
 
-**Explicitly later (slice 4.5 / settings polish)**
+### Slice 4.5 — Settings polish (done)
 
-- Device JSON export from Settings (PWA has export buttons on settings shell).
-- Per-exercise JSON import/export in the managers if PWA has them — port only if you still use that workflow.
-- Responsive iPad settings sidebar (native tabs already support `sidebarAdaptable`).
+**Shipped**
 
-### Remaining phase 4 slices
+- Settings home: three grouped sections (library, data, connection), no secondary lines; iOS uses SwiftUI `List` with `insetGrouped` style.
+- **Export data** beside Import: full JSON export via share sheet (`workout-export-YYYY-MM-DD.json`).
+- Manager UX: icon-only swipe actions, shorter routine rows, full-width segmented controls with equal columns when paired, tighter spacing above lists.
+- iPad: continues to use `sidebarAdaptable` native tabs; no custom settings sidebar.
 
-Suggested order by gym value (adjust as you like):
+### Phase 4 slices (all done)
 
-1. ~~**Mid-workout logging**~~ (4.2, done).
-2. ~~**History**~~ (4.3, done).
-3. ~~**Routines and exercises**~~ (4.4, done).
-4. **Settings polish** (4.5, current) — export UI, sidebar, anything left from PWA settings.
+1. ~~**Mid-workout logging**~~ (4.2).
+2. ~~**History**~~ (4.3).
+3. ~~**Routines and exercises**~~ (4.4).
+4. ~~**Settings polish**~~ (4.5).
 
-Defer until core flows work: web memory smoke tests, JSON export from device, trends/analytics if the PWA has them.
+Defer until later: web memory smoke tests, trends/analytics if the PWA has them.
 
 **Build** (full phase, unchanged goal)
+
 - Logging a workout (fast, one-handed), exercises, routines, history, and whatever trend views you use today.
 - Settings, including a **Connection** screen that says the app is running locally.
 - Responsive layouts: tabs on a phone, sidebar on wide screens where the platform provides it.
 - Web: until the server exists, run the web UI against the memory adapter for layout work. A browser-storage adapter is an option if you want the web version usable on its own (DECISIONS C).
 
 **Done when** (phase 4 complete)
+
 - You can log a full workout, edit a routine, and review history without opening the old PWA.
 - The app is usable one-handed, in a gym, with bad signal.
 
@@ -152,6 +168,7 @@ Defer until core flows work: web memory smoke tests, JSON export from device, tr
 Use it for real workouts for a few weeks. Nothing new gets built except fixes.
 
 **Done when**
+
 - You've stopped using the PWA.
 - The schema has settled: no migrations needed for a couple of weeks.
 - You've decided whether to enroll in the Apple Developer Program, since TestFlight and the App Store need it. The friend on iOS 18 can test through TestFlight at that point.
@@ -172,6 +189,7 @@ Order by value to you, one at a time.
 Each newer-iOS feature goes behind the one version-check helper, with an iOS 18 fallback.
 
 **Done when**
+
 - Each feature works on an iOS 18 simulator (with its fallback) and on your own phone.
 
 ---
@@ -181,6 +199,7 @@ Each newer-iOS feature goes behind the one version-check helper, with an iOS 18 
 Only after the local app is stable.
 
 **Build**
+
 - Spike first: deploy a minimal Expo server-output app with an API route to Vercel, and confirm the one-click deploy works end to end.
 - `src/app/api/`: CRUD routes matching the repository interface, plus `changesSince`, a version and capabilities endpoint, and tombstones for deletes.
 - A Postgres schema that matches the core types, with a test that checks the two schemas agree.
@@ -190,6 +209,7 @@ Only after the local app is stable.
 - The server update flow (open decision).
 
 **Done when**
+
 - A fresh deploy to Vercel can be claimed, paired with the app by QR code, and synced both ways.
 - Local data uploads to a new backend without duplicates.
 - An older app version works against a newer server version.

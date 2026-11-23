@@ -1,7 +1,7 @@
 import type { SettingsRowAction } from "@/components/settings/SettingsSwipeRow";
 import type { SessionExercise } from "@/core/logic/sessionQueue";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { StyleSheet } from "react-native";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { StyleSheet, View } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
@@ -65,13 +65,15 @@ export function ThisDayList({
   const orderKey = exercises.map((exercise) => exercise.exerciseId).join("\0");
   const orderKeyRef = useRef(orderKey);
   const freshIds = useFreshIds(exercises.map((exercise) => exercise.exerciseId));
+  const measured = rowHeight > 0;
   const height = rowHeight || ESTIMATE;
+  const step = height + ROW_GAP;
   const total =
     exercises.length === 0 ? 0 : exercises.length * height + (exercises.length - 1) * ROW_GAP;
   const listHeight = useSharedValue(total);
   const listStyle = useAnimatedStyle(() => ({ height: listHeight.value }));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     onReorderRef.current = onReorder;
     exercisesRef.current = exercises;
     count.value = exercises.length;
@@ -86,7 +88,8 @@ export function ThisDayList({
     }
     if (active.value) return;
     slots.value = slotsFor(exercises);
-    if (sawList.current && orderChanged) animate.value = true;
+    // Estimated positions are corrected on the first measure. That is not an add or reorder.
+    if (sawList.current && orderChanged && rowHeight > 0) animate.value = true;
     sawList.current = true;
   }, [active, animate, count, exercises, listHeight, onReorder, orderKey, rowHeight, slots, stride, total]);
 
@@ -147,38 +150,61 @@ export function ThisDayList({
     [active, count, exerciseId, from, grab, lastShift, onActiveChange, onCommit, onShift, stride, translation],
   );
 
+  if (rowHeight > 0 && stride.value !== step) {
+    // Rows mount in this render. Their first frame must already use the measured stride.
+    // eslint-disable-next-line react-hooks/immutability -- shared value
+    stride.value = step;
+  }
+
+  const sample = exercises[0];
+  const measureRow = (next: number) => setRowHeight((current) => (current === next ? current : next));
+
+  function exerciseRow(exercise: SessionExercise, index: number, onMeasure?: (height: number) => void) {
+    return (
+      <SessionExerciseRow
+        exercise={exercise}
+        index={index}
+        drag={drag}
+        onMeasure={onMeasure}
+        onPress={() => onPress(exercise)}
+        trailing={{
+          label: "Delete",
+          systemImage: "trash",
+          destructive: true,
+          onPress: () => onDelete(exercise.exerciseId),
+        }}
+        menu={menuFor(exercise, index)}
+      />
+    );
+  }
+
   return (
-    <Animated.View style={[styles.list, listStyle]}>
-      {exercises.map((exercise, index) => (
-        <DaySlot
-          key={exercise.exerciseId}
-          exercise={exercise}
-          index={index}
-          fresh={freshIds.has(exercise.exerciseId)}
-          slots={slots}
-          animate={animate}
-          drag={drag}
-        >
-          <SessionExerciseRow
-            exercise={exercise}
-            index={index}
-            drag={drag}
-            onMeasure={
-              index === 0
-                ? (next) => setRowHeight((current) => (current === next ? current : next))
-                : undefined
-            }
-            onPress={() => onPress(exercise)}
-            trailing={{
-              label: "Delete",
-              systemImage: "trash",
-              destructive: true,
-              onPress: () => onDelete(exercise.exerciseId),
-            }}
-            menu={menuFor(exercise, index)}
-          />
-        </DaySlot>
-      ))}
+    <Animated.View
+      pointerEvents={measured ? "auto" : "none"}
+      style={[styles.list, listStyle, measured ? null : styles.hidden]}
+    >
+      {measured
+        ? exercises.map((exercise, index) => (
+            <DaySlot
+              key={exercise.exerciseId}
+              exercise={exercise}
+              index={index}
+              step={step}
+              fresh={freshIds.has(exercise.exerciseId)}
+              slots={slots}
+              animate={animate}
+              drag={drag}
+            >
+              {exerciseRow(exercise, index, index === 0 ? measureRow : undefined)}
+            </DaySlot>
+          ))
+        : sample
+          ? (
+              <View style={styles.measurer} pointerEvents="none">
+                {exerciseRow(sample, 0, measureRow)}
+              </View>
+            )
+          : null}
     </Animated.View>
   );
 }
@@ -186,6 +212,7 @@ export function ThisDayList({
 function DaySlot({
   exercise,
   index,
+  step,
   fresh,
   slots,
   animate,
@@ -194,13 +221,14 @@ function DaySlot({
 }: {
   exercise: SessionExercise;
   index: number;
+  step: number;
   fresh: boolean;
   slots: SharedValue<Record<string, number>>;
   animate: SharedValue<boolean>;
   drag: SessionDrag;
   children: ReactNode;
 }) {
-  const top = useSharedValue(index * (ESTIMATE + ROW_GAP));
+  const top = useSharedValue(index * step);
   const lifted = useSharedValue(0);
 
   useAnimatedReaction(
@@ -240,6 +268,14 @@ function DaySlot({
 const styles = StyleSheet.create({
   list: {
     position: "relative",
+  },
+  hidden: {
+    opacity: 0,
+  },
+  measurer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
   },
   slot: {
     position: "absolute",

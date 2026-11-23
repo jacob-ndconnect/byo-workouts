@@ -4,6 +4,8 @@ import { nowIso } from "@/core/time";
 import type { Exercise } from "@/core/types";
 import type { Repository } from "@/data/repository";
 
+import { invalidateWorkoutSessionCache } from "./workoutSessionCache";
+
 type LogExerciseInput = {
   workoutId: string;
   exercise: Exercise;
@@ -44,6 +46,7 @@ export async function logExercise(
       extra_values: measures.extra_values,
     });
   }
+  invalidateWorkoutSessionCache();
 }
 
 export async function nextSetSortOrder(

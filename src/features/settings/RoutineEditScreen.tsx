@@ -369,9 +369,9 @@ export function RoutineEditScreen() {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-  scroll: { padding: 16, gap: 12, paddingBottom: 40 },
+  scroll: { padding: 16, gap: 8, paddingBottom: 40 },
   warnings: { gap: 4 },
-  gui: { gap: 12 },
+  gui: { gap: 8 },
   field: { gap: 8 },
   label: { fontSize: 13 },
   input: {

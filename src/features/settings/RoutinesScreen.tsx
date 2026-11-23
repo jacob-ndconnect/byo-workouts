@@ -1,4 +1,5 @@
 import { SettingsActionList } from "@/components/settings/SettingsActionList";
+import { SETTINGS_LIST_PICKER_GAP } from "@/components/settings/settingsListLayout";
 import { SettingsActionRow } from "@/components/settings/SettingsActionRow";
 import { SegmentedControl, SegmentFade } from "@/components/settings/SegmentedControl";
 import { mutedLabel } from "@/constants/themeColors";
@@ -105,7 +106,7 @@ export function RoutinesScreen() {
                 ],
         }}
       />
-      <View style={[styles.screen, { paddingTop: headerHeight + 8 }]}>
+      <View style={[styles.screen, { paddingTop: headerHeight + 2 }]}>
         <View style={styles.controls}>
           <SegmentedControl
             accessibilityLabel="Routine archive filter"
@@ -207,7 +208,7 @@ export function RoutinesScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, gap: 12 },
+  screen: { flex: 1, gap: SETTINGS_LIST_PICKER_GAP },
   pane: { flex: 1 },
   controls: { paddingHorizontal: 16 },
   status: { fontSize: 14, paddingHorizontal: 20, marginTop: 8 },
@@ -216,8 +217,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    minHeight: 72,
+    paddingVertical: 11,
+    minHeight: 44,
   },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
   title: { fontSize: 17 },

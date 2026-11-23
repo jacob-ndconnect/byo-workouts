@@ -23,10 +23,12 @@ import { WorkoutActionsMenu } from "@/components/workout/WorkoutActionsMenu";
 import { WorkoutFloatingFooter } from "@/components/workout/WorkoutFloatingFooter";
 import { openRepository } from "@/data/openRepository";
 import { finishWorkout } from "@/features/workout/ensureOpenWorkout";
+import type { WorkoutSessionData } from "@/features/workout/getWorkoutSessionData";
 import {
-  getWorkoutSessionData,
-  type WorkoutSessionData,
-} from "@/features/workout/getWorkoutSessionData";
+  invalidateWorkoutSessionCache,
+  loadWorkoutSession,
+  peekWorkoutSession,
+} from "@/features/workout/workoutSessionCache";
 import {
   getJustAdded,
   getQueueRevision,
@@ -35,7 +37,7 @@ import {
   setQueueState,
 } from "@/features/workout/workoutUiState";
 import { Stack, useFocusEffect, useLocalSearchParams, useNavigation, useRouter, useTheme } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -56,16 +58,26 @@ export function WorkoutSessionScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { dayId } = useLocalSearchParams<{ dayId: string }>();
-  const [data, setData] = useState<WorkoutSessionData | null>(null);
+  const [data, setData] = useState<WorkoutSessionData | null>(() =>
+    dayId ? peekWorkoutSession(dayId) : null,
+  );
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [showSpinner, setShowSpinner] = useState(false);
   const [queueEpoch, setQueueEpoch] = useState(() => getQueueRevision());
+  const spinnerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasSession = useRef(data != null);
+
+  useEffect(() => {
+    hasSession.current = data != null;
+  }, [data]);
 
   const load = useCallback(() => {
     if (!dayId) return;
-    setLoading(true);
     setError(null);
-    void getWorkoutSessionData(openRepository(), dayId)
+    if (!hasSession.current && spinnerTimer.current == null) {
+      spinnerTimer.current = setTimeout(() => setShowSpinner(true), 200);
+    }
+    void loadWorkoutSession(dayId)
       .then((result) => {
         setData(result);
         const state = getQueueState(result.workout.id);
@@ -90,12 +102,24 @@ export function WorkoutSessionScreen() {
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : "Failed to load workout");
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (spinnerTimer.current) {
+          clearTimeout(spinnerTimer.current);
+          spinnerTimer.current = null;
+        }
+        setShowSpinner(false);
+      });
   }, [dayId]);
 
   useFocusEffect(
     useCallback(() => {
       load();
+      return () => {
+        if (spinnerTimer.current) {
+          clearTimeout(spinnerTimer.current);
+          spinnerTimer.current = null;
+        }
+      };
     }, [load]),
   );
 
@@ -113,7 +137,7 @@ export function WorkoutSessionScreen() {
     };
   }, [navigation]);
 
-  const workoutId = data?.workout.id ?? "";
+  const workoutId = data?.workout?.id ?? "";
   const done = useMemo(
     () => completedExerciseIds(data?.sessionLogs ?? []),
     [data?.sessionLogs],
@@ -282,6 +306,7 @@ export function WorkoutSessionScreen() {
   async function handleFinish() {
     if (!workoutId) return;
     await finishWorkout(openRepository(), workoutId);
+    invalidateWorkoutSessionCache();
     if (router.canGoBack()) {
       router.back();
     }
@@ -300,9 +325,19 @@ export function WorkoutSessionScreen() {
 
   const headerTitle = data ? `Day ${data.dayName}` : "Workout";
 
-  const freshJustAdded = useFreshIds(visibleJustAdded.map((exercise) => exercise.exerciseId));
-  const freshRoutine = useFreshIds(sections?.thisRoutine.map((exercise) => exercise.exerciseId) ?? []);
-  const freshOther = useFreshIds(sections?.other.map((exercise) => exercise.exerciseId) ?? []);
+  const listsReady = data != null;
+  const freshJustAdded = useFreshIds(
+    visibleJustAdded.map((exercise) => exercise.exerciseId),
+    listsReady,
+  );
+  const freshRoutine = useFreshIds(
+    sections?.thisRoutine.map((exercise) => exercise.exerciseId) ?? [],
+    listsReady,
+  );
+  const freshOther = useFreshIds(
+    sections?.other.map((exercise) => exercise.exerciseId) ?? [],
+    listsReady,
+  );
 
   function renderSection(title: string, exercises: SessionExercise[], fresh: Set<string>) {
     if (exercises.length === 0) return null;
@@ -343,16 +378,17 @@ export function WorkoutSessionScreen() {
             Platform.OS === "ios"
               ? undefined
               : () =>
-                  data ? (
+                  data?.workout ? (
                     <WorkoutActionsMenu
                       dayId={dayId!}
                       workoutId={data.workout.id}
                       onFinishWorkout={confirmFinish}
                     />
                   ) : null,
-          unstable_headerRightItems: () =>
-            data
-              ? [
+          unstable_headerRightItems: () => {
+            const openWorkoutId = data?.workout?.id;
+            if (!openWorkoutId) return [];
+            return [
                   {
                     type: "menu",
                     label: "Workout options",
@@ -368,7 +404,7 @@ export function WorkoutSessionScreen() {
                           onPress: () =>
                             router.push({
                               pathname: "/workout/[dayId]/add-exercise",
-                              params: { dayId: dayId!, workoutId: data.workout.id },
+                              params: { dayId: dayId!, workoutId: openWorkoutId },
                             }),
                         },
                         {
@@ -381,11 +417,11 @@ export function WorkoutSessionScreen() {
                       ],
                     },
                   },
-                ]
-              : [],
+                ];
+          },
         }}
       />
-      {loading && !data ? (
+      {showSpinner && !data ? (
         <View style={styles.centered}>
           <ActivityIndicator />
         </View>

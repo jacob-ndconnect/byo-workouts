@@ -12,6 +12,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { FadeIn, FadeOut, runOnJS, type SharedValue } from "react-native-reanimated";
 
+import { nextFreshIds } from "./freshListIds";
 import { SessionRowMenu } from "./SessionRowMenu";
 
 export type SessionDrag = {
@@ -42,14 +43,19 @@ type SessionExerciseRowProps = {
 const ENTER = FadeIn.duration(220);
 const EXIT = FadeOut.duration(180);
 
-export function useFreshIds(ids: string[]): Set<string> {
+const NO_FRESH = new Set<string>();
+
+/** `ready` stays false while the list is still a placeholder, so the first real ids do not animate in. */
+export function useFreshIds(ids: string[], ready = true): Set<string> {
   const key = ids.join("\0");
-  const [known, setKnown] = useState(key);
+  const [known, setKnown] = useState<string | null>(null);
   const [fresh, setFresh] = useState<Set<string>>(() => new Set());
+  if (!ready) return NO_FRESH;
   if (known !== key) {
-    const previous = new Set(known.split("\0").filter((id) => id !== ""));
-    setKnown(key);
-    setFresh(new Set(ids.filter((id) => !previous.has(id))));
+    const next = nextFreshIds(known, ids);
+    setKnown(next.key);
+    setFresh(next.fresh);
+    return next.fresh;
   }
   return fresh;
 }
