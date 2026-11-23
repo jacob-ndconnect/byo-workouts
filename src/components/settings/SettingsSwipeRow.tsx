@@ -1,8 +1,8 @@
 import { groupedSurface } from "@/constants/themeColors";
 import { SymbolView, type SFSymbol } from "expo-symbols";
 import { useTheme } from "expo-router";
-import { type ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { type ReactNode, useState } from "react";
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
@@ -24,6 +24,12 @@ type SettingsSwipeRowProps = {
   leading?: SettingsRowAction;
   /** Revealed by a right-to-left swipe. A long swipe runs it. */
   trailing?: SettingsRowAction;
+  /** Let the child define height and background (e.g. workout cards). */
+  flush?: boolean;
+  /** Drawn inside the sliding face, outside the swipe pan. */
+  accessory?: ReactNode;
+  faceStyle?: StyleProp<ViewStyle>;
+  onLayout?: (height: number) => void;
 };
 
 const ACTION_HEIGHT = 72;
@@ -31,10 +37,20 @@ const REVEAL = 118;
 const COMMIT_RATIO = 0.42;
 const SPRING = { damping: 18, stiffness: 260, mass: 0.6 };
 
-export function SettingsSwipeRow({ children, leading, trailing }: SettingsSwipeRowProps) {
+export function SettingsSwipeRow({
+  children,
+  leading,
+  trailing,
+  flush,
+  accessory,
+  faceStyle,
+  onLayout,
+}: SettingsSwipeRowProps) {
   const theme = useTheme();
   const translateX = useSharedValue(0);
   const rowWidth = useSharedValue(0);
+  const reveal = useSharedValue(flush ? 44 : REVEAL);
+  const [iconSize, setIconSize] = useState(32);
 
   function closeAndRun(action: SettingsRowAction | undefined) {
     translateX.value = withSpring(0, SPRING);
@@ -55,6 +71,7 @@ export function SettingsSwipeRow({ children, leading, trailing }: SettingsSwipeR
   const pan = Gesture.Pan()
     .activeOffsetX([-18, 18])
     .failOffsetY([-16, 16])
+    .cancelsTouchesInView(false)
     .onUpdate((event) => {
       let x = event.translationX;
       if (!hasLeading && x > 0) x = 0;
@@ -73,12 +90,13 @@ export function SettingsSwipeRow({ children, leading, trailing }: SettingsSwipeR
         runOnJS(commitTrailing)();
         return;
       }
-      if (hasLeading && x > 36) {
-        translateX.value = withSpring(REVEAL, SPRING);
+      const openAt = flush ? 16 : 36;
+      if (hasLeading && x > openAt) {
+        translateX.value = withSpring(reveal.value, SPRING);
         return;
       }
-      if (hasTrailing && x < -36) {
-        translateX.value = withSpring(-REVEAL, SPRING);
+      if (hasTrailing && x < -openAt) {
+        translateX.value = withSpring(-reveal.value, SPRING);
         return;
       }
       translateX.value = withSpring(0, SPRING);
@@ -89,7 +107,8 @@ export function SettingsSwipeRow({ children, leading, trailing }: SettingsSwipeR
   }));
 
   const leadingBubble = useAnimatedStyle(() => {
-    const progress = Math.min(1, Math.max(0, translateX.value) / REVEAL);
+    const span = reveal.value || 1;
+    const progress = Math.min(1, Math.max(0, translateX.value) / span);
     return {
       opacity: progress,
       transform: [{ scale: 0.65 + 0.35 * progress }],
@@ -97,59 +116,98 @@ export function SettingsSwipeRow({ children, leading, trailing }: SettingsSwipeR
   });
 
   const trailingBubble = useAnimatedStyle(() => {
-    const progress = Math.min(1, Math.max(0, -translateX.value) / REVEAL);
+    const span = reveal.value || 1;
+    const progress = Math.min(1, Math.max(0, -translateX.value) / span);
     return {
       opacity: progress,
       transform: [{ scale: 0.65 + 0.35 * progress }],
     };
   });
 
+  const flushButton = {
+    width: iconSize,
+    height: iconSize,
+    minWidth: iconSize,
+    borderRadius: iconSize / 2,
+    paddingHorizontal: 0,
+  };
+
   return (
     <View
       style={styles.clip}
       onLayout={(event) => {
         rowWidth.value = event.nativeEvent.layout.width;
+        const height = Math.round(event.nativeEvent.layout.height);
+        if (height > 0) onLayout?.(height);
+        if (!flush) return;
+        const size = Math.max(28, height - 8);
+        reveal.value = size + 6;
+        setIconSize((current) => (current === size ? current : size));
       }}
     >
       {leading ? (
-        <View style={styles.leadingSlot} pointerEvents="box-none">
+        <View style={[styles.leadingSlot, flush && styles.leadingFlush]} pointerEvents="box-none">
           <Animated.View style={leadingBubble}>
             <Pressable
-              style={[styles.bubble, styles.edit]}
+              style={[styles.bubble, flush && flushButton, styles.edit]}
               onPress={() => closeAndRun(leading)}
               accessibilityRole="button"
               accessibilityLabel={leading.label}
             >
-              <SymbolView name={leading.systemImage} size={18} tintColor="#fff" />
-              <Text style={styles.actionLabel} numberOfLines={1}>
-                {leading.label}
-              </Text>
+              <SymbolView name={leading.systemImage} size={flush ? 16 : 18} tintColor="#fff" />
+              {flush ? null : (
+                <Text style={styles.actionLabel} numberOfLines={1}>
+                  {leading.label}
+                </Text>
+              )}
             </Pressable>
           </Animated.View>
         </View>
       ) : null}
       {trailing ? (
-        <View style={styles.trailingSlot} pointerEvents="box-none">
+        <View style={[styles.trailingSlot, flush && styles.trailingFlush]} pointerEvents="box-none">
           <Animated.View style={trailingBubble}>
             <Pressable
-              style={[styles.bubble, trailing.destructive ? styles.destructive : styles.restore]}
+              style={[
+                styles.bubble,
+                flush && flushButton,
+                trailing.destructive ? styles.destructive : styles.restore,
+              ]}
               onPress={() => closeAndRun(trailing)}
               accessibilityRole="button"
               accessibilityLabel={trailing.label}
             >
-              <SymbolView name={trailing.systemImage} size={18} tintColor="#fff" />
-              <Text style={styles.actionLabel} numberOfLines={1}>
-                {trailing.label}
-              </Text>
+              <SymbolView name={trailing.systemImage} size={flush ? 16 : 18} tintColor="#fff" />
+              {flush ? null : (
+                <Text style={styles.actionLabel} numberOfLines={1}>
+                  {trailing.label}
+                </Text>
+              )}
             </Pressable>
           </Animated.View>
         </View>
       ) : null}
-      <GestureDetector gesture={pan}>
-        <Animated.View style={[slide, styles.face]}>
-          <View style={[styles.faceFill, { backgroundColor: groupedSurface(theme) }]}>{children}</View>
-        </Animated.View>
-      </GestureDetector>
+      <Animated.View style={[slide, flush ? styles.faceFlush : styles.face, faceStyle, accessory ? styles.splitFace : null]}>
+        {accessory ? (
+          <>
+            <GestureDetector gesture={pan}>
+              <View style={styles.splitMain}>{children}</View>
+            </GestureDetector>
+            {accessory}
+          </>
+        ) : (
+          <GestureDetector gesture={pan}>
+            <View
+              style={[
+                flush ? styles.faceFillFlush : styles.faceFill,
+                !flush && { backgroundColor: groupedSurface(theme) },
+              ]}
+            >
+              {children}
+            </View>
+          </GestureDetector>
+        )}
+      </Animated.View>
     </View>
   );
 }
@@ -162,10 +220,23 @@ const styles = StyleSheet.create({
     width: "100%",
     minHeight: ACTION_HEIGHT,
   },
+  faceFlush: {
+    width: "100%",
+  },
   faceFill: {
     flexGrow: 1,
     minHeight: ACTION_HEIGHT,
     justifyContent: "center",
+  },
+  faceFillFlush: {
+    width: "100%",
+  },
+  splitFace: {
+    flexDirection: "row",
+    alignItems: "stretch",
+  },
+  splitMain: {
+    flex: 1,
   },
   leadingSlot: {
     position: "absolute",
@@ -180,6 +251,12 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     justifyContent: "center",
+  },
+  leadingFlush: {
+    left: 4,
+  },
+  trailingFlush: {
+    right: 4,
   },
   bubble: {
     minWidth: 76,

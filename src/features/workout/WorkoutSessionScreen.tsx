@@ -1,17 +1,24 @@
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { ExerciseReveal, SessionExerciseRow, useFreshIds } from "@/components/workout/SessionExerciseRow";
+import { ThisDayList } from "@/components/workout/ThisDayList";
 import { SessionProgress } from "@/components/workout/SessionProgress";
-import { cardBorderRadius } from "@/constants/brandColors";
-import { mutedLabel, subtleBorder } from "@/constants/themeColors";
+import { mutedLabel } from "@/constants/themeColors";
 import {
+  addToTodayQueue,
   buildInitialQueue,
   buildWorkoutSections,
   completedExerciseIds,
   isCompletedForSession,
+  moveQueueItem,
+  reconcileSessionQueue,
+  removeFromTodayQueue,
+  reorderQueue,
   requeueExercise,
+  sessionExerciseLookup,
   sessionProgress,
-  syncQueueWithDone,
   type SessionExercise,
 } from "@/core/logic/sessionQueue";
+import type { SettingsRowAction } from "@/components/settings/SettingsSwipeRow";
 import { WorkoutActionsMenu } from "@/components/workout/WorkoutActionsMenu";
 import { WorkoutFloatingFooter } from "@/components/workout/WorkoutFloatingFooter";
 import { openRepository } from "@/data/openRepository";
@@ -20,67 +27,28 @@ import {
   getWorkoutSessionData,
   type WorkoutSessionData,
 } from "@/features/workout/getWorkoutSessionData";
-import { getJustAdded, getQueueState, setQueueState } from "@/features/workout/workoutUiState";
+import {
+  getJustAdded,
+  getQueueRevision,
+  getQueueState,
+  isQueueInitialized,
+  setQueueState,
+} from "@/features/workout/workoutUiState";
 import { Stack, useFocusEffect, useLocalSearchParams, useNavigation, useRouter, useTheme } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 
-function ExerciseRow({
-  exercise,
-  onPress,
-}: {
-  exercise: SessionExercise;
-  onPress: () => void;
-}) {
+function SectionTitle({ title }: { title: string }) {
   const theme = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.exerciseRow,
-        {
-          borderColor: subtleBorder(theme),
-          backgroundColor: theme.colors.card,
-        },
-      ]}
-    >
-      <Text style={[styles.exerciseName, { color: theme.colors.text }]}>{exercise.name}</Text>
-    </Pressable>
-  );
-}
-
-function SectionBlock({
-  title,
-  exercises,
-  onOpen,
-}: {
-  title: string;
-  exercises: SessionExercise[];
-  onOpen: (exercise: SessionExercise) => void;
-}) {
-  const theme = useTheme();
-  if (exercises.length === 0) return null;
-  return (
-    <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: mutedLabel(theme) }]}>{title}</Text>
-      {exercises.map((exercise) => (
-        <ExerciseRow
-          key={`${title}-${exercise.exerciseId}`}
-          exercise={exercise}
-          onPress={() => onOpen(exercise)}
-        />
-      ))}
-    </View>
-  );
+  return <Text style={[styles.sectionTitle, { color: mutedLabel(theme) }]}>{title}</Text>;
 }
 
 export function WorkoutSessionScreen() {
@@ -91,6 +59,7 @@ export function WorkoutSessionScreen() {
   const [data, setData] = useState<WorkoutSessionData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [queueEpoch, setQueueEpoch] = useState(() => getQueueRevision());
 
   const load = useCallback(() => {
     if (!dayId) return;
@@ -99,12 +68,24 @@ export function WorkoutSessionScreen() {
     void getWorkoutSessionData(openRepository(), dayId)
       .then((result) => {
         setData(result);
-        const { queue, requeued } = getQueueState(result.workout.id);
-        if (queue.length === 0) {
-          const done = completedExerciseIds(result.sessionLogs);
+        const state = getQueueState(result.workout.id);
+        const done = completedExerciseIds(result.sessionLogs);
+        if (!isQueueInitialized(result.workout.id)) {
           const initial = buildInitialQueue(result.dayExercises, done);
-          setQueueState(result.workout.id, initial, requeued);
+          setQueueState(result.workout.id, initial, state.requeued, new Set());
+        } else {
+          const reconciled = reconcileSessionQueue(
+            result.dayExercises,
+            done,
+            state.queue,
+            state.requeued,
+            state.removed,
+          );
+          if (reconciled.join() !== state.queue.join()) {
+            setQueueState(result.workout.id, reconciled, state.requeued, state.removed);
+          }
         }
+        setQueueEpoch(getQueueRevision());
       })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : "Failed to load workout");
@@ -138,32 +119,44 @@ export function WorkoutSessionScreen() {
     [data?.sessionLogs],
   );
   const queueState = getQueueState(workoutId);
+
   const queue = useMemo(() => {
     if (!data) return [];
-    const base =
-      queueState.queue.length > 0
-        ? queueState.queue
-        : buildInitialQueue(data.dayExercises, done);
-    return syncQueueWithDone(data.dayExercises, done, base, queueState.requeued);
-  }, [data, done, queueState.queue, queueState.requeued]);
-
-  useEffect(() => {
-    if (!data || !workoutId) return;
-    const synced = queue;
-    if (synced.join() !== queueState.queue.join()) {
-      setQueueState(workoutId, synced, queueState.requeued);
-    }
-  }, [data, queue, queueState.queue, queueState.requeued, workoutId]);
+    const state = getQueueState(workoutId);
+    const base = isQueueInitialized(workoutId)
+      ? state.queue
+      : buildInitialQueue(data.dayExercises, done);
+    return reconcileSessionQueue(
+      data.dayExercises,
+      done,
+      base,
+      state.requeued,
+      state.removed,
+    );
+    // queueEpoch forces a re-read when in-memory queue mutates without new server data.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- queueEpoch
+  }, [data, done, workoutId, queueEpoch]);
 
   const justAdded = useMemo(
     () => (workoutId ? getJustAdded(workoutId) : []),
-    [workoutId],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- queueEpoch
+    [workoutId, queueEpoch],
   );
-  const justAddedIds = useMemo(() => new Set(justAdded.map((e) => e.exerciseId)), [justAdded]);
+  const queueIdSet = useMemo(() => new Set(queue), [queue]);
 
   const sections = useMemo(() => {
     if (!data) return null;
-    const base = buildWorkoutSections(
+    const lookup = sessionExerciseLookup(
+      {
+        dayId: data.dayId,
+        dayExercises: data.dayExercises,
+        routineExercises: data.routineExercises,
+        otherExercises: data.otherExercises,
+        sessionLogs: data.sessionLogs,
+      },
+      justAdded,
+    );
+    return buildWorkoutSections(
       {
         dayId: data.dayId,
         dayExercises: data.dayExercises,
@@ -173,22 +166,19 @@ export function WorkoutSessionScreen() {
       },
       queue,
       done,
+      lookup,
     );
-    const filterJustAdded = (list: SessionExercise[]) =>
-      list.filter((entry) => !justAddedIds.has(entry.exerciseId));
-    return {
-      ...base,
-      thisDay: filterJustAdded(base.thisDay),
-      thisRoutine: filterJustAdded(base.thisRoutine),
-      other: filterJustAdded(base.other),
-    };
-  }, [data, queue, done, justAddedIds]);
+  }, [data, queue, done, justAdded]);
 
   const visibleJustAdded = justAdded.filter(
-    (exercise) => !isCompletedForSession(exercise.exerciseId, done, queue),
+    (exercise) =>
+      !queueIdSet.has(exercise.exerciseId) &&
+      !isCompletedForSession(exercise.exerciseId, done, queue),
   );
 
-  const progress = data ? sessionProgress(data.dayExercises, done, queue) : { completed: 0, total: 0 };
+  const progress = data
+    ? sessionProgress(data.dayExercises, queue, done, queueState.removed)
+    : { completed: 0, total: 0 };
   const nextExerciseId = queue[0] ?? null;
   const nextExercise = useMemo(() => {
     if (!data || !nextExerciseId) return null;
@@ -197,9 +187,19 @@ export function WorkoutSessionScreen() {
       ...data.dayExercises,
       ...data.routineExercises,
       ...data.otherExercises,
+      ...justAdded,
     ];
     return all.find((entry) => entry.exerciseId === nextExerciseId) ?? null;
-  }, [data, nextExerciseId, visibleJustAdded]);
+  }, [data, nextExerciseId, visibleJustAdded, justAdded]);
+
+  const commitQueue = useCallback(
+    (nextQueue: string[], requeued: Set<string>, removed: Set<string>) => {
+      if (!workoutId) return;
+      setQueueState(workoutId, nextQueue, requeued, removed);
+      setQueueEpoch(getQueueRevision());
+    },
+    [workoutId],
+  );
 
   function openExercise(exercise: SessionExercise) {
     if (!dayId || !workoutId) return;
@@ -215,11 +215,69 @@ export function WorkoutSessionScreen() {
   }
 
   function handleRequeue(exerciseId: string) {
-    const requeued = new Set(queueState.requeued);
+    const state = getQueueState(workoutId);
+    const requeued = new Set(state.requeued);
     requeued.add(exerciseId);
     const nextQueue = requeueExercise(queue, exerciseId);
-    setQueueState(workoutId, nextQueue, requeued);
+    commitQueue(nextQueue, requeued, state.removed);
   }
+
+  function handleRemoveFromToday(exerciseId: string) {
+    const state = getQueueState(workoutId);
+    const next = removeFromTodayQueue(queue, state.removed, exerciseId);
+    commitQueue(next.queue, state.requeued, next.removed);
+  }
+
+  function handleAddToToday(exerciseId: string) {
+    const state = getQueueState(workoutId);
+    const next = addToTodayQueue(queue, state.removed, exerciseId);
+    commitQueue(next.queue, state.requeued, next.removed);
+  }
+
+  function handleMove(exerciseId: string, direction: "up" | "down") {
+    const state = getQueueState(workoutId);
+    commitQueue(moveQueueItem(queue, exerciseId, direction), state.requeued, state.removed);
+  }
+
+  function handleReorder(from: number, to: number) {
+    const state = getQueueState(workoutId);
+    commitQueue(reorderQueue(queue, from, to), state.requeued, state.removed);
+  }
+
+  function thisDayMenu(exercise: SessionExercise, index: number): SettingsRowAction[] {
+    const items: SettingsRowAction[] = [];
+    if (index > 0) {
+      items.push({
+        label: "Move up",
+        systemImage: "arrow.up",
+        onPress: () => handleMove(exercise.exerciseId, "up"),
+      });
+    }
+    if (index < queue.length - 1) {
+      items.push({
+        label: "Move down",
+        systemImage: "arrow.down",
+        onPress: () => handleMove(exercise.exerciseId, "down"),
+      });
+    }
+    items.push({
+      label: "Delete",
+      systemImage: "trash",
+      destructive: true,
+      onPress: () => handleRemoveFromToday(exercise.exerciseId),
+    });
+    return items;
+  }
+
+  const addToTodayLeading = (exerciseId: string): SettingsRowAction => ({
+    label: "Add to today",
+    systemImage: "plus",
+    onPress: () => handleAddToToday(exerciseId),
+  });
+
+  const addToTodayMenu = (exerciseId: string): SettingsRowAction[] => [
+    addToTodayLeading(exerciseId),
+  ];
 
   async function handleFinish() {
     if (!workoutId) return;
@@ -241,6 +299,29 @@ export function WorkoutSessionScreen() {
   }
 
   const headerTitle = data ? `Day ${data.dayName}` : "Workout";
+
+  const freshJustAdded = useFreshIds(visibleJustAdded.map((exercise) => exercise.exerciseId));
+  const freshRoutine = useFreshIds(sections?.thisRoutine.map((exercise) => exercise.exerciseId) ?? []);
+  const freshOther = useFreshIds(sections?.other.map((exercise) => exercise.exerciseId) ?? []);
+
+  function renderSection(title: string, exercises: SessionExercise[], fresh: Set<string>) {
+    if (exercises.length === 0) return null;
+    return (
+      <View style={styles.section}>
+        <SectionTitle title={title} />
+        {exercises.map((exercise) => (
+          <ExerciseReveal key={`${title}-${exercise.exerciseId}`} fresh={fresh.has(exercise.exerciseId)}>
+            <SessionExerciseRow
+              exercise={exercise}
+              onPress={() => openExercise(exercise)}
+              leading={addToTodayLeading(exercise.exerciseId)}
+              menu={addToTodayMenu(exercise.exerciseId)}
+            />
+          </ExerciseReveal>
+        ))}
+      </View>
+    );
+  }
 
   return (
     <>
@@ -278,8 +359,6 @@ export function WorkoutSessionScreen() {
                     icon: { type: "sfSymbol", name: "ellipsis" },
                     changesSelectionAsPrimaryAction: false,
                     menu: {
-                      // Undefined multiselectable is passed through as single-selection,
-                      // which draws a check on the last item.
                       multiselectable: true,
                       items: [
                         {
@@ -332,14 +411,21 @@ export function WorkoutSessionScreen() {
               onRequeue={handleRequeue}
             />
 
-            <SectionBlock title="Just added" exercises={visibleJustAdded} onOpen={openExercise} />
-            <SectionBlock title="This day" exercises={sections.thisDay} onOpen={openExercise} />
-            <SectionBlock
-              title="This routine"
-              exercises={sections.thisRoutine}
-              onOpen={openExercise}
-            />
-            <SectionBlock title="Other" exercises={sections.other} onOpen={openExercise} />
+            {renderSection("Just added", visibleJustAdded, freshJustAdded)}
+            {sections.thisDay.length > 0 ? (
+              <View style={styles.section}>
+                <SectionTitle title="This day" />
+                <ThisDayList
+                  exercises={sections.thisDay}
+                  onPress={openExercise}
+                  onDelete={handleRemoveFromToday}
+                  menuFor={thisDayMenu}
+                  onReorder={handleReorder}
+                />
+              </View>
+            ) : null}
+            {renderSection("This routine", sections.thisRoutine, freshRoutine)}
+            {renderSection("Other", sections.other, freshOther)}
           </ScrollView>
 
           <WorkoutFloatingFooter>
@@ -372,12 +458,5 @@ const styles = StyleSheet.create({
   muted: { fontSize: 14, textAlign: "center" },
   section: { gap: 8 },
   sectionTitle: { fontSize: 14, fontWeight: "500" },
-  exerciseRow: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: cardBorderRadius,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  exerciseName: { fontSize: 15, fontWeight: "500" },
   footerComplete: { gap: 12 },
 });
