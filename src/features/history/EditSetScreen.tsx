@@ -1,16 +1,13 @@
 import { HistoryDateField } from "@/components/history/HistoryDateField";
+import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { SheetScaffold } from "@/components/workout/SheetScaffold";
-import {
-  workoutPrimaryButton,
-  workoutPrimaryButtonLabel,
-} from "@/constants/workoutButtons";
 import { mutedLabel } from "@/constants/themeColors";
 import { formatFieldLabel } from "@/core/logic/logFields";
 import { openRepository } from "@/data/openRepository";
 import { getLoggedSetEditor, updateLoggedSet } from "@/features/history/historyData";
 import { Stack, useLocalSearchParams, useRouter, useTheme } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
 
 export function EditSetScreen() {
   const theme = useTheme();
@@ -75,15 +72,11 @@ export function EditSetScreen() {
       <Stack.Screen options={{ title: `Edit ${exerciseName}` }} />
       <SheetScaffold
         footer={
-          <Pressable
-            style={[workoutPrimaryButton, { backgroundColor: theme.colors.primary }]}
+          <PrimaryButton
+            label={saving ? "Saving…" : "Save changes"}
             disabled={saving || !loggedAt}
             onPress={() => void handleSave()}
-          >
-            <Text style={workoutPrimaryButtonLabel.text}>
-              {saving ? "Saving…" : "Save changes"}
-            </Text>
-          </Pressable>
+          />
         }
       >
         {loggedAt ? <HistoryDateField value={loggedAt} onChange={setLoggedAt} /> : null}

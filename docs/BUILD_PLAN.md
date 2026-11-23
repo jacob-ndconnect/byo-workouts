@@ -2,7 +2,7 @@
 
 The order of work, with what "done" means for each phase. Each phase should leave the app in a state you can run and use. Decisions that are still open are listed in `DECISIONS.md` Part 2. Anything in the "later" phases stays out of the code until its phase starts.
 
-Current phase: **4** (next slice: **4.4** — routines and exercises).
+Current phase: **4** (next slice: **4.5** — settings polish).
 
 ---
 
@@ -109,26 +109,14 @@ Work in **slices**. Each slice should leave the app runnable on device.
 - Export-from-history. Device export stays in settings polish.
 - Routine and exercise editors.
 
-### Slice 4.4 — Routines and exercises (next)
+### Slice 4.4 — Routines and exercises (done)
 
-**Goal:** Replace the Settings stubs for **Exercises**, **Routines**, and **Defaults** so you can maintain the library and active routine without the PWA. Home should reflect edits (active routine, day cards) on focus like History and Home do today.
-
-**Parity target (PWA)** — use as the planning checklist:
-
-| Area | `workout-tracker` |
-|------|-------------------|
-| Settings entry points | `app/(app)/settings/exercises/page.tsx`, `.../routines/page.tsx`, `.../defaults/page.tsx` |
-| Exercises UI | `components/exercises/exercises-manager.tsx`, `exercise-form.tsx` |
-| Routines UI | `components/routines/routines-manager.tsx`, `routine-editor.tsx`, `routine-create-form.tsx` |
-| Defaults UI | `components/defaults/defaults-manager.tsx` |
-| Data + mutations | `lib/actions/exercises.ts`, `lib/actions/routines.ts`, `lib/actions/defaults.ts` |
-
-**Likely app work (confirm in planning)**
-
-- **Data:** All reads and writes through `openRepository()`. Exercises: create, edit name / tracking / `logged_fields` / `settings_fields`, archive. Routines: create, rename, activate (one active), archive; days and day slots (`routine_days`, `routine_day_exercises`) with sort order. Defaults: update the single `defaults` row (`default_sets`, `default_reps`) used to prefill the log sheet.
-- **UI:** `src/app/(tabs)/settings/exercises`, `routines`, `defaults` — grouped lists and native stack / `formSheet` editors, same patterns as workout logging and history edit. Routines may need a dedicated editor stack (days, reorder, pick exercises).
-- **Home:** Already loads on focus; no extra channel if editors only touch repository records Home already reads.
-- **Import:** Settings import screen is done; editors must not break imported PWA shape (`extensions.pwa`, machine vs tracking mode).
+**Shipped**
+- Settings **Exercises**, **Routines**, and **Defaults** replace the stubs. Each manager has Active / Archived (where applicable), **Form** / **JSON** editors, and PWA-style save rules (JSON omits do not delete; form routine save removes omitted days/slots via soft-delete).
+- Exercises: list, archive, `formSheet` create/edit (`machine` / `other` / `cardio` via `extensions.pwa`), JSON bulk edit by name.
+- Routines: list, create (`formSheet`), set active (single active), archive, stack editor for days/slots/reorder, JSON by exercise name.
+- Defaults: sets/reps form and JSON; creates the row if missing.
+- Core planners: `src/core/logic/exerciseLibrary.ts`, `routineEditor.ts`; repository apply in `src/features/settings/settings*.ts`.
 
 **Explicitly later (slice 4.5 / settings polish)**
 
@@ -142,8 +130,8 @@ Suggested order by gym value (adjust as you like):
 
 1. ~~**Mid-workout logging**~~ (4.2, done).
 2. ~~**History**~~ (4.3, done).
-3. **Routines and exercises** (4.4, current).
-4. **Settings polish** (4.5) — export UI, sidebar, anything left from PWA settings.
+3. ~~**Routines and exercises**~~ (4.4, done).
+4. **Settings polish** (4.5, current) — export UI, sidebar, anything left from PWA settings.
 
 Defer until core flows work: web memory smoke tests, JSON export from device, trends/analytics if the PWA has them.
 

@@ -1,8 +1,6 @@
+import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { SessionProgress } from "@/components/workout/SessionProgress";
 import { cardBorderRadius } from "@/constants/brandColors";
-import {
-  workoutPrimaryButton,
-  workoutPrimaryButtonLabel,
-} from "@/constants/workoutButtons";
 import { mutedLabel, subtleBorder } from "@/constants/themeColors";
 import {
   buildInitialQueue,
@@ -25,7 +23,6 @@ import {
 import { getJustAdded, getQueueState, setQueueState } from "@/features/workout/workoutUiState";
 import { Stack, useFocusEffect, useLocalSearchParams, useNavigation, useRouter, useTheme } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { SymbolView } from "expo-symbols";
 import {
   ActivityIndicator,
   Alert,
@@ -94,7 +91,6 @@ export function WorkoutSessionScreen() {
   const [data, setData] = useState<WorkoutSessionData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [progressOpen, setProgressOpen] = useState(false);
 
   const load = useCallback(() => {
     if (!dayId) return;
@@ -204,9 +200,6 @@ export function WorkoutSessionScreen() {
     ];
     return all.find((entry) => entry.exerciseId === nextExerciseId) ?? null;
   }, [data, nextExerciseId, visibleJustAdded]);
-
-  const progressPercent =
-    progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
 
   function openExercise(exercise: SessionExercise) {
     if (!dayId || !workoutId) return;
@@ -332,49 +325,12 @@ export function WorkoutSessionScreen() {
             <Text style={[styles.routineName, { color: mutedLabel(theme) }]}>
               {data.routineName}
             </Text>
-            <View style={[styles.progressCard, { borderColor: subtleBorder(theme) }]}>
-              <Pressable
-                onPress={() => setProgressOpen((open) => !open)}
-                style={styles.progressHeader}
-              >
-                <View
-                  style={[styles.progressFill, { width: `${progressPercent}%` }]}
-                />
-                <Text style={[styles.progressLabel, { color: theme.colors.text }]}>
-                  {progress.completed} of {progress.total} done
-                </Text>
-                <SymbolView
-                  name={progressOpen ? "chevron.up" : "chevron.down"}
-                  size={14}
-                  weight="semibold"
-                  tintColor={mutedLabel(theme)}
-                />
-              </Pressable>
-              {progressOpen ? (
-                <View style={[styles.completedList, { borderTopColor: subtleBorder(theme) }]}>
-                  {sections.completed.length === 0 ? (
-                    <Text style={[styles.muted, { color: mutedLabel(theme) }]}>
-                      No exercises completed in this session yet.
-                    </Text>
-                  ) : (
-                    sections.completed.map((log) => (
-                      <Pressable
-                        key={log.id}
-                        onPress={() => handleRequeue(log.exerciseId)}
-                        style={styles.completedRow}
-                      >
-                        <Text style={{ color: theme.colors.text }}>{log.name}</Text>
-                      </Pressable>
-                    ))
-                  )}
-                  {sections.completed.length > 0 ? (
-                    <Text style={[styles.hint, { color: mutedLabel(theme) }]}>
-                      Tap a completed exercise to re-queue it at the front.
-                    </Text>
-                  ) : null}
-                </View>
-              ) : null}
-            </View>
+            <SessionProgress
+              completed={progress.completed}
+              total={progress.total}
+              logs={sections.completed}
+              onRequeue={handleRequeue}
+            />
 
             <SectionBlock title="Just added" exercises={visibleJustAdded} onOpen={openExercise} />
             <SectionBlock title="This day" exercises={sections.thisDay} onOpen={openExercise} />
@@ -388,25 +344,16 @@ export function WorkoutSessionScreen() {
 
           <WorkoutFloatingFooter>
             {nextExercise ? (
-              <Pressable
-                style={[workoutPrimaryButton, { backgroundColor: theme.colors.primary }]}
+              <PrimaryButton
+                label={`Next: ${nextExercise.name}`}
                 onPress={() => openExercise(nextExercise)}
-              >
-                <Text style={workoutPrimaryButtonLabel.text}>
-                  Next: {nextExercise.name}
-                </Text>
-              </Pressable>
+              />
             ) : (
               <View style={styles.footerComplete}>
                 <Text style={[styles.muted, { color: mutedLabel(theme) }]}>
                   Workout complete — all planned exercises done this session.
                 </Text>
-                <Pressable
-                  style={[workoutPrimaryButton, { backgroundColor: theme.colors.primary }]}
-                  onPress={confirmFinish}
-                >
-                  <Text style={workoutPrimaryButtonLabel.text}>Finish</Text>
-                </Pressable>
+                <PrimaryButton label="Finish" onPress={confirmFinish} />
               </View>
             )}
           </WorkoutFloatingFooter>
@@ -422,33 +369,6 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
   error: { color: "#FF3B30", textAlign: "center" },
   routineName: { fontSize: 15 },
-  progressCard: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: cardBorderRadius,
-    overflow: "hidden",
-  },
-  progressHeader: {
-    padding: 14,
-    overflow: "hidden",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  progressFill: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: "rgba(120,120,128,0.16)",
-  },
-  progressLabel: { flex: 1, fontSize: 15, fontWeight: "500" },
-  completedList: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    padding: 14,
-    gap: 8,
-  },
-  completedRow: { paddingVertical: 6 },
-  hint: { fontSize: 12 },
   muted: { fontSize: 14, textAlign: "center" },
   section: { gap: 8 },
   sectionTitle: { fontSize: 14, fontWeight: "500" },

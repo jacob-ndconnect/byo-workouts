@@ -1,7 +1,5 @@
-import { StubScreen } from "@/components/ui/StubScreen";
+import { RoutinesScreen } from "@/features/settings/RoutinesScreen";
 
 export default function RoutinesSettingsRoute() {
-  return (
-    <StubScreen message="Routine editor and activation are coming in the next slice." />
-  );
+  return <RoutinesScreen />;
 }

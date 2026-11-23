@@ -38,13 +38,17 @@ export function GroupedListRow({ children, first }: GroupedListRowProps) {
 
 type GroupedListScreenProps = {
   children: ReactNode;
+  /** Skip the screen inset when the parent already pads to the same edge. */
+  flush?: boolean;
+  /** No card fill, so a swipe reveals the page behind the row. */
+  bare?: boolean;
 };
 
-export function GroupedListScreen({ children }: GroupedListScreenProps) {
+export function GroupedListScreen({ children, flush, bare }: GroupedListScreenProps) {
   const rows = Children.toArray(children);
   return (
-    <View style={styles.screen}>
-      <GroupedList>
+    <View style={flush ? undefined : styles.screen}>
+      <GroupedList style={bare ? styles.bare : undefined}>
         {rows.map((child, index) => (
           <GroupedListRow key={index} first={index === 0}>
             {child}
@@ -63,6 +67,9 @@ const styles = StyleSheet.create({
   group: {
     borderRadius: 12,
     overflow: "hidden",
+  },
+  bare: {
+    backgroundColor: "transparent",
   },
   row: {
     minHeight: 44,

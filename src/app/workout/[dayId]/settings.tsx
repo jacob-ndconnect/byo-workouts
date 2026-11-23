@@ -1,8 +1,5 @@
+import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { SheetScaffold } from "@/components/workout/SheetScaffold";
-import {
-  workoutPrimaryButton,
-  workoutPrimaryButtonLabel,
-} from "@/constants/workoutButtons";
 import { mutedLabel } from "@/constants/themeColors";
 import { formatFieldLabel } from "@/core/logic/logFields";
 import { openRepository } from "@/data/openRepository";
@@ -73,19 +70,12 @@ export default function ExerciseSettingsSheet() {
   return (
     <SheetScaffold
       footer={
-        <Pressable
-          style={[
-            workoutPrimaryButton,
-            { backgroundColor: theme.colors.primary },
-            (!dirty || saving) && styles.disabled,
-          ]}
+        <PrimaryButton
+          label={saving ? "Saving…" : "Save"}
           disabled={!dirty || saving}
           onPress={() => void save()}
-        >
-          <Text style={workoutPrimaryButtonLabel.text}>
-            {saving ? "Saving…" : "Save"}
-          </Text>
-        </Pressable>
+          style={(!dirty || saving) && styles.disabled}
+        />
       }
     >
       {pairs.map((pair, index) => (

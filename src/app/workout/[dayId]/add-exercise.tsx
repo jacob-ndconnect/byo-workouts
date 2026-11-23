@@ -1,8 +1,5 @@
+import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { SheetScaffold } from "@/components/workout/SheetScaffold";
-import {
-  workoutPrimaryButton,
-  workoutPrimaryButtonLabel,
-} from "@/constants/workoutButtons";
 import { mutedLabel } from "@/constants/themeColors";
 import { defaultLoggedFields } from "@/core/logic/logFields";
 import type { TrackingMode } from "@/core/types";
@@ -62,15 +59,11 @@ export default function AddExerciseSheet() {
   return (
     <SheetScaffold
       footer={
-        <Pressable
-          style={[workoutPrimaryButton, { backgroundColor: theme.colors.primary }]}
+        <PrimaryButton
+          label={saving ? "Saving…" : "Create exercise"}
           disabled={saving}
           onPress={() => void handleSave()}
-        >
-          <Text style={workoutPrimaryButtonLabel.text}>
-            {saving ? "Saving…" : "Create exercise"}
-          </Text>
-        </Pressable>
+        />
       }
     >
       <View style={styles.field}>

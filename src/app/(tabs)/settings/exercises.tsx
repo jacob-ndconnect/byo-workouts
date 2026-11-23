@@ -1,7 +1,5 @@
-import { StubScreen } from "@/components/ui/StubScreen";
+import { ExercisesScreen } from "@/features/settings/ExercisesScreen";
 
 export default function ExercisesSettingsRoute() {
-  return (
-    <StubScreen message="Exercise library management is coming in the next slice." />
-  );
+  return <ExercisesScreen />;
 }

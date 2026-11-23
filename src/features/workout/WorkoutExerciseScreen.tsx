@@ -1,8 +1,5 @@
+import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { WorkoutFloatingFooter } from "@/components/workout/WorkoutFloatingFooter";
-import {
-  workoutPrimaryButton,
-  workoutPrimaryButtonLabel,
-} from "@/constants/workoutButtons";
 import { mutedLabel } from "@/constants/themeColors";
 import { formatFieldLabel } from "@/core/logic/logFields";
 import { openRepository } from "@/data/openRepository";
@@ -119,12 +116,7 @@ export function WorkoutExerciseScreen() {
             ) : null}
           </ScrollView>
           <WorkoutFloatingFooter>
-            <Pressable
-              style={[workoutPrimaryButton, { backgroundColor: theme.colors.primary }]}
-              onPress={openLog}
-            >
-              <Text style={workoutPrimaryButtonLabel.text}>Done</Text>
-            </Pressable>
+            <PrimaryButton label="Done" onPress={openLog} />
           </WorkoutFloatingFooter>
         </>
       )}

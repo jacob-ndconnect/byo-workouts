@@ -1,8 +1,5 @@
+import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { SheetScaffold } from "@/components/workout/SheetScaffold";
-import {
-  workoutPrimaryButton,
-  workoutPrimaryButtonLabel,
-} from "@/constants/workoutButtons";
 import { mutedLabel } from "@/constants/themeColors";
 import { formatFieldLabel } from "@/core/logic/logFields";
 import { openRepository } from "@/data/openRepository";
@@ -95,15 +92,11 @@ export default function LogSheetRoute() {
   return (
     <SheetScaffold
       footer={
-        <Pressable
-          style={[workoutPrimaryButton, { backgroundColor: theme.colors.primary }]}
+        <PrimaryButton
+          label={saving ? "Logging…" : "Log"}
           disabled={saving}
           onPress={() => void handleLog()}
-        >
-          <Text style={workoutPrimaryButtonLabel.text}>
-            {saving ? "Logging…" : "Log"}
-          </Text>
-        </Pressable>
+        />
       }
     >
       {fields.map((field) => (
