@@ -1,5 +1,5 @@
-import { HistoryRow } from "@/components/history/HistoryRow";
-import { groupedSurface, mutedLabel, subtleBorder } from "@/constants/themeColors";
+import { HistoryList } from "@/components/history/HistoryList";
+import { mutedLabel } from "@/constants/themeColors";
 import {
   HISTORY_SORT_OPTIONS,
   sortHistoryEntries,
@@ -9,16 +9,7 @@ import { openRepository } from "@/data/openRepository";
 import { listHistoryEntries, type HistoryEntry } from "@/features/history/historyData";
 import { Stack, useFocusEffect, useRouter, useTheme } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 export function HistoryScreen() {
   const theme = useTheme();
@@ -47,7 +38,7 @@ export function HistoryScreen() {
 
   const sorted = useMemo(() => sortHistoryEntries(entries, sortKey), [entries, sortKey]);
 
-  function confirmDelete(entry: HistoryEntry) {
+  const confirmDelete = useCallback((entry: HistoryEntry) => {
     Alert.alert("Delete set?", `Remove ${entry.exerciseName} from ${entry.dateLabel}?`, [
       { text: "Cancel", style: "cancel" },
       {
@@ -66,7 +57,14 @@ export function HistoryScreen() {
         },
       },
     ]);
-  }
+  }, [load]);
+
+  const editEntry = useCallback(
+    (entry: HistoryEntry) => {
+      router.push({ pathname: "/history/edit", params: { setId: entry.id } });
+    },
+    [router],
+  );
 
   function openSort() {
     Alert.alert("Sort by", undefined, [
@@ -129,33 +127,10 @@ export function HistoryScreen() {
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={sorted}
-          keyExtractor={(item) => item.id}
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.flex}
-          contentContainerStyle={styles.list}
-          renderItem={({ item, index }) => (
-            <View
-              style={[
-                { backgroundColor: groupedSurface(theme) },
-                index === 0 && styles.rowFirst,
-                index === sorted.length - 1 && styles.rowLast,
-                index < sorted.length - 1 && {
-                  borderBottomWidth: StyleSheet.hairlineWidth,
-                  borderBottomColor: subtleBorder(theme),
-                },
-              ]}
-            >
-              <HistoryRow
-                entry={item}
-                onEdit={() =>
-                  router.push({ pathname: "/history/edit", params: { setId: item.id } })
-                }
-                onDelete={() => confirmDelete(item)}
-              />
-            </View>
-          )}
+        <HistoryList
+          entries={sorted}
+          onEdit={editEntry}
+          onDelete={confirmDelete}
         />
       )}
     </>
@@ -172,20 +147,4 @@ const styles = StyleSheet.create({
   },
   empty: { fontSize: 15, textAlign: "center" },
   error: { color: "#FF3B30", fontSize: 15, textAlign: "center" },
-  flex: { flex: 1 },
-  list: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 24,
-  },
-  rowFirst: {
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    overflow: "hidden",
-  },
-  rowLast: {
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-    overflow: "hidden",
-  },
 });

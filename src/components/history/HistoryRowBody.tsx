@@ -19,8 +19,8 @@ export function HistoryRowBody({ entry }: { entry: HistoryEntry }) {
 const styles = StyleSheet.create({
   row: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 2,
+    paddingVertical: 8,
+    gap: 1,
   },
   name: { fontSize: 17, fontWeight: "600" },
   values: { fontSize: 15 },

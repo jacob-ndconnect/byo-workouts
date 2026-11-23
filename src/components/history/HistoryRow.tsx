@@ -1,5 +1,5 @@
+import { SettingsActionRow } from "@/components/settings/SettingsActionRow";
 import type { HistoryEntry } from "@/features/history/historyData";
-import { Alert, Pressable } from "react-native";
 
 import { HistoryRowBody } from "./HistoryRowBody";
 
@@ -10,18 +10,22 @@ type HistoryRowProps = {
 };
 
 export function HistoryRow({ entry, onEdit, onDelete }: HistoryRowProps) {
+  const edit = { label: "Edit", systemImage: "pencil" as const, onPress: onEdit };
+  const remove = {
+    label: "Delete",
+    systemImage: "trash" as const,
+    destructive: true,
+    onPress: onDelete,
+  };
+
   return (
-    <Pressable
-      accessibilityHint="Long press to edit or delete"
-      onLongPress={() => {
-        Alert.alert(entry.exerciseName, undefined, [
-          { text: "Edit", onPress: onEdit },
-          { text: "Delete", style: "destructive", onPress: onDelete },
-          { text: "Cancel", style: "cancel" },
-        ]);
-      }}
+    <SettingsActionRow
+      menuTitle={entry.exerciseName}
+      leading={edit}
+      trailing={remove}
+      menu={[edit, remove]}
     >
       <HistoryRowBody entry={entry} />
-    </Pressable>
+    </SettingsActionRow>
   );
 }
