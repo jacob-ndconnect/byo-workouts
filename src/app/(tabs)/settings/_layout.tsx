@@ -27,6 +27,10 @@ export default function SettingsLayout() {
         name="routines/new"
         options={{ ...formSheet, sheetAllowedDetents: [1], title: "" }}
       />
+      <Stack.Screen
+        name="routines/add-exercise"
+        options={{ ...formSheet, sheetAllowedDetents: [1], title: "Add exercise" }}
+      />
       <Stack.Screen name="routines/[id]" options={{ title: "Edit routine" }} />
       <Stack.Screen name="defaults" options={{ title: "Defaults" }} />
       <Stack.Screen name="import" options={{ title: "Import data" }} />

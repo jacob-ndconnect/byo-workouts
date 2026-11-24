@@ -9,17 +9,28 @@ type SessionRowMenuProps = {
   onPress: () => void;
   /** Stretch to a parent that already has a height (today's rows, beside the handle). */
   fill?: boolean;
+  /** Horizontal padding inside the row. Defaults to the logging-list inset. */
+  horizontalInset?: number;
   children: ReactNode;
 };
 
-export function SessionRowMenu({ menu, onPress, fill, children }: SessionRowMenuProps) {
+export function SessionRowMenu({
+  menu,
+  onPress,
+  fill,
+  horizontalInset = 14,
+  children,
+}: SessionRowMenuProps) {
   return (
     <Host matchContents={{ vertical: true }} style={fill ? styles.hostFill : styles.host}>
       <ContextMenu>
         <ContextMenu.Trigger>
           <RNHostView matchContents={{ vertical: true }}>
             <Pressable
-              style={fill ? styles.hitFill : styles.hit}
+              style={[
+                fill ? styles.hitFill : styles.hit,
+                { paddingLeft: horizontalInset, paddingRight: fill ? 0 : horizontalInset },
+              ]}
               onPress={onPress}
               accessibilityHint="Long press for actions"
             >
@@ -56,8 +67,6 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "center",
     paddingVertical: 12,
-    paddingLeft: 14,
-    paddingRight: 14,
   },
   hitFill: {
     flex: 1,
@@ -65,6 +74,5 @@ const styles = StyleSheet.create({
     height: "100%",
     justifyContent: "center",
     paddingVertical: 12,
-    paddingLeft: 14,
   },
 });

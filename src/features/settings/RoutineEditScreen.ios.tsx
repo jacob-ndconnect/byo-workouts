@@ -1,14 +1,13 @@
-import { FormTextField } from "@/components/settings/FormTextField";
-import { softScrollEdge } from "@/components/ui/softScrollEdge";
-import {
-  defaultDayName,
-  moveItem,
-  type AssembledRoutineDay,
-  type RoutineFormInput,
-} from "@/core/logic/routineEditor";
+import { RoutineFormBody, type RoutineEditorDay } from "@/components/settings/RoutineFormBody.ios";
+import { SegmentedControl } from "@/components/settings/SegmentedControl";
+import { SettingsHeaderControls } from "@/components/settings/SettingsHeaderControls";
+import { SETTINGS_LIST_PICKER_GAP } from "@/components/settings/settingsListLayout";
+import { mutedLabel } from "@/constants/themeColors";
+import { type AssembledRoutineDay, type RoutineFormInput } from "@/core/logic/routineEditor";
 import type { Exercise } from "@/core/types";
 import { openRepository } from "@/data/openRepository";
 import { markRoutinesDirty } from "@/features/settings/libraryDirty";
+import { takeRoutineExercisePick } from "@/features/settings/routineExercisePick";
 import {
   listActiveExercises,
   loadAssembledRoutineDays,
@@ -16,48 +15,14 @@ import {
   saveRoutineFromForm,
   saveRoutineFromJson,
 } from "@/features/settings/settingsRoutines";
-import {
-  Button,
-  Form,
-  Host,
-  HStack,
-  Picker,
-  Section,
-  Spacer,
-  Text,
-} from "@expo/ui/swift-ui";
-import {
-  autocorrectionDisabled,
-  disabled,
-  foregroundStyle,
-  labelStyle,
-  lineLimit,
-  pickerStyle,
-  tag,
-  textInputAutocapitalization,
-} from "@expo/ui/swift-ui/modifiers";
-import { Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { Stack, useFocusEffect, useLocalSearchParams, useTheme } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
+import { useCallback, useRef, useState } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 type ViewMode = "gui" | "json";
 
-type FormExercise = { key: string; id?: string; exerciseId: string };
-type FormDay = { key: string; id?: string; name: string; exercises: FormExercise[] };
-
-const jsonModifiers = [
-  autocorrectionDisabled(),
-  textInputAutocapitalization("never"),
-  lineLimit({ min: 8, max: 24 }),
-];
-
-let nextKey = 0;
-function localKey() {
-  nextKey += 1;
-  return `local-${nextKey}`;
-}
-
-function assembledToForm(days: AssembledRoutineDay[]): FormDay[] {
+function assembledToForm(days: AssembledRoutineDay[]): RoutineEditorDay[] {
   return days.map((day) => ({
     key: day.id,
     id: day.id,
@@ -71,20 +36,20 @@ function assembledToForm(days: AssembledRoutineDay[]): FormDay[] {
 }
 
 export function RoutineEditScreen() {
+  const theme = useTheme();
+  const headerHeight = useHeaderHeight();
+  const [chromeHeight, setChromeHeight] = useState(0);
   const { id: routineId } = useLocalSearchParams<{ id: string }>();
   const [viewMode, setViewMode] = useState<ViewMode>("gui");
   const [name, setName] = useState("");
-  const [days, setDays] = useState<FormDay[]>([]);
+  const [days, setDays] = useState<RoutineEditorDay[]>([]);
   const [availableExercises, setAvailableExercises] = useState<Exercise[]>([]);
   const [jsonText, setJsonText] = useState<string | null>(null);
-  const [jsonKey, setJsonKey] = useState(0);
-  const [dataKey, setDataKey] = useState(0);
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-
-  const exerciseNameById = new Map(availableExercises.map((exercise) => [exercise.id, exercise.name]));
+  const loaded = useRef(false);
 
   const load = useCallback(() => {
     if (!routineId) return;
@@ -94,14 +59,34 @@ export function RoutineEditScreen() {
         setName(assembled.routineName);
         setDays(assembledToForm(assembled.days));
         setAvailableExercises(exercises);
-        setDataKey((current) => current + 1);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load"))
-      .finally(() => setReady(true));
+      .finally(() => {
+        loaded.current = true;
+        setReady(true);
+      });
   }, [routineId]);
 
   useFocusEffect(
     useCallback(() => {
+      const pick = takeRoutineExercisePick();
+      if (pick) {
+        setDays((current) =>
+          current.map((day) => {
+            if (day.key !== pick.dayKey) return day;
+            if (day.exercises.some((exercise) => exercise.exerciseId === pick.exerciseId)) return day;
+            return {
+              ...day,
+              exercises: [
+                ...day.exercises,
+                { key: `pick-${Date.now()}`, exerciseId: pick.exerciseId },
+              ],
+            };
+          }),
+        );
+        return;
+      }
+      if (loaded.current) return;
       load();
     }, [load]),
   );
@@ -110,35 +95,12 @@ export function RoutineEditScreen() {
     if (mode === "json" && routineId) {
       setJsonText(null);
       void routineJsonText(openRepository(), routineId)
-        .then((text) => {
-          setJsonText(text);
-          setJsonKey((current) => current + 1);
-        })
+        .then(setJsonText)
         .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load JSON"));
     }
     setViewMode(mode);
     setError(null);
     setWarnings([]);
-  }
-
-  function addDay() {
-    setDays((current) => [
-      ...current,
-      { key: localKey(), name: defaultDayName(current.length), exercises: [] },
-    ]);
-  }
-
-  function addExercise(dayIndex: number, exerciseId: string) {
-    setDays((current) =>
-      current.map((day, index) => {
-        if (index !== dayIndex) return day;
-        if (day.exercises.some((exercise) => exercise.exerciseId === exerciseId)) return day;
-        return {
-          ...day,
-          exercises: [...day.exercises, { key: localKey(), exerciseId }],
-        };
-      }),
-    );
   }
 
   async function handleGuiSave() {
@@ -177,7 +139,6 @@ export function RoutineEditScreen() {
       markRoutinesDirty();
       const refreshed = await routineJsonText(openRepository(), routineId);
       setJsonText(refreshed);
-      setJsonKey((current) => current + 1);
       load();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -186,202 +147,91 @@ export function RoutineEditScreen() {
     }
   }
 
+  const editor = (
+    <SettingsHeaderControls headerHeight={headerHeight} onHeight={setChromeHeight}>
+      <View style={styles.controls}>
+        <SegmentedControl
+          accessibilityLabel="Editor mode"
+          options={[
+            { value: "gui", label: "Form" },
+            { value: "json", label: "JSON" },
+          ]}
+          value={viewMode}
+          onChange={switchViewMode}
+        />
+      </View>
+      {error ? <Text style={[styles.status, { color: theme.colors.notification }]}>{error}</Text> : null}
+      {warnings.length > 0 ? (
+        <View style={styles.warnings}>
+          <Text style={{ color: theme.colors.text, fontWeight: "600" }}>Warnings</Text>
+          {warnings.map((warning) => (
+            <Text key={warning} style={{ color: mutedLabel(theme), fontSize: 13 }}>
+              {warning}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+    </SettingsHeaderControls>
+  );
+
   return (
     <>
-      <Stack.Screen options={{ title: name || "Routine" }} />
+      <Stack.Screen
+        options={{
+          title: name || "Routine",
+          unstable_headerRightItems: () => [
+            {
+              type: "button",
+              label: "Save",
+              icon: { type: "sfSymbol", name: "checkmark" },
+              variant: "done",
+              tintColor: theme.colors.primary,
+              disabled: !ready || saving || (viewMode === "json" && jsonText === null),
+              onPress: () => void (viewMode === "json" ? handleJsonSave() : handleGuiSave()),
+            },
+          ],
+        }}
+      />
       {!ready ? (
         <View style={styles.centered}>
           <ActivityIndicator />
         </View>
       ) : (
-        <Host style={styles.screen} useViewportSizeMeasurement>
-          <Form modifiers={[softScrollEdge("all")]}>
-              <Section>
-                <Picker
-                  selection={viewMode}
-                  onSelectionChange={(value) => {
-                    if (value === "gui" || value === "json") switchViewMode(value);
-                  }}
-                  modifiers={[pickerStyle("segmented")]}
-                >
-                  <Text modifiers={[tag("gui")]}>Form</Text>
-                  <Text modifiers={[tag("json")]}>JSON</Text>
-                </Picker>
-              </Section>
-
-              {error ? (
-                <Section>
-                  <Text modifiers={[foregroundStyle("#FF3B30")]}>{error}</Text>
-                </Section>
-              ) : null}
-              {warnings.length > 0 ? (
-                <Section title="Warnings">
-                  {warnings.map((warning) => (
-                    <Text key={warning}>{warning}</Text>
-                  ))}
-                </Section>
-              ) : null}
-
-              {viewMode === "gui" ? (
-                <>
-                  <Section>
-                    <FormTextField key={dataKey} label="Name" initial={name} onChange={setName} />
-                  </Section>
-
-                  <Section>
-                    <Button label="Add day" onPress={addDay} />
-                  </Section>
-
-                  {days.length === 0 ? (
-                    <Section>
-                      <Text>No days yet.</Text>
-                    </Section>
-                  ) : (
-                    days.map((day, dayIndex) => (
-                      <Section key={day.key}>
-                        <FormTextField
-                          key={`${dataKey}-${day.key}`}
-                          label="Day"
-                          initial={day.name}
-                          onChange={(value) =>
-                            setDays((current) =>
-                              current.map((item) => (item.key === day.key ? { ...item, name: value } : item)),
-                            )
-                          }
-                        />
-                        {day.exercises.length === 0 ? (
-                          <Text>No exercises on this day.</Text>
-                        ) : (
-                          day.exercises.map((exercise, exerciseIndex) => (
-                            <HStack key={exercise.key}>
-                              <Text>{exerciseNameById.get(exercise.exerciseId) ?? "Unknown exercise"}</Text>
-                              <Spacer />
-                              <Button
-                                label="Move up"
-                                systemImage="chevron.up"
-                                onPress={() =>
-                                  setDays((current) =>
-                                    current.map((item) =>
-                                      item.key === day.key
-                                        ? { ...item, exercises: moveItem(item.exercises, exerciseIndex, -1) }
-                                        : item,
-                                    ),
-                                  )
-                                }
-                                modifiers={[labelStyle("iconOnly"), disabled(exerciseIndex === 0)]}
-                              />
-                              <Button
-                                label="Move down"
-                                systemImage="chevron.down"
-                                onPress={() =>
-                                  setDays((current) =>
-                                    current.map((item) =>
-                                      item.key === day.key
-                                        ? { ...item, exercises: moveItem(item.exercises, exerciseIndex, 1) }
-                                        : item,
-                                    ),
-                                  )
-                                }
-                                modifiers={[
-                                  labelStyle("iconOnly"),
-                                  disabled(exerciseIndex === day.exercises.length - 1),
-                                ]}
-                              />
-                              <Button
-                                label="Remove exercise"
-                                systemImage="minus.circle"
-                                role="destructive"
-                                onPress={() =>
-                                  setDays((current) =>
-                                    current.map((item) =>
-                                      item.key === day.key
-                                        ? {
-                                            ...item,
-                                            exercises: item.exercises.filter(
-                                              (slot) => slot.key !== exercise.key,
-                                            ),
-                                          }
-                                        : item,
-                                    ),
-                                  )
-                                }
-                                modifiers={[labelStyle("iconOnly")]}
-                              />
-                            </HStack>
-                          ))
-                        )}
-                        {availableExercises.length === 0 ? (
-                          <Text>No exercises to add.</Text>
-                        ) : (
-                          <Picker
-                            label="Add exercise"
-                            systemImage="plus"
-                            selection={null}
-                            onSelectionChange={(value) => {
-                              if (typeof value === "string") addExercise(dayIndex, value);
-                            }}
-                          >
-                            {availableExercises.map((exercise) => (
-                              <Text key={exercise.id} modifiers={[tag(exercise.id)]}>
-                                {exercise.name}
-                              </Text>
-                            ))}
-                          </Picker>
-                        )}
-                        <HStack>
-                          <Button
-                            label="Move day up"
-                            systemImage="chevron.up"
-                            onPress={() => setDays((current) => moveItem(current, dayIndex, -1))}
-                            modifiers={[labelStyle("iconOnly"), disabled(dayIndex === 0)]}
-                          />
-                          <Button
-                            label="Move day down"
-                            systemImage="chevron.down"
-                            onPress={() => setDays((current) => moveItem(current, dayIndex, 1))}
-                            modifiers={[labelStyle("iconOnly"), disabled(dayIndex === days.length - 1)]}
-                          />
-                          <Spacer />
-                          <Button
-                            label="Remove day"
-                            role="destructive"
-                            onPress={() => setDays((current) => current.filter((item) => item.key !== day.key))}
-                          />
-                        </HStack>
-                      </Section>
-                    ))
-                  )}
-
-                  <Section>
-                    <Button
-                      label={saving ? "Saving…" : "Save routine"}
-                      onPress={() => void handleGuiSave()}
-                      modifiers={[disabled(saving)]}
-                    />
-                  </Section>
-                </>
+        <View style={styles.screen}>
+          {editor}
+          {viewMode === "gui" ? (
+            <RoutineFormBody
+              name={name}
+              onNameChange={setName}
+              days={days}
+              onDaysChange={setDays}
+              availableExercises={availableExercises}
+              topInset={headerHeight + chromeHeight + SETTINGS_LIST_PICKER_GAP}
+            />
+          ) : (
+            <ScrollView
+              style={styles.screen}
+              contentInsetAdjustmentBehavior="automatic"
+              contentContainerStyle={[styles.jsonScroll, { paddingTop: chromeHeight + SETTINGS_LIST_PICKER_GAP }]}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+            >
+              {jsonText === null ? (
+                <ActivityIndicator />
               ) : (
-                <Section>
-                  {jsonText === null ? (
-                    <Text>Loading…</Text>
-                  ) : (
-                    <FormTextField
-                      key={jsonKey}
-                      initial={jsonText}
-                      multiline
-                      onChange={setJsonText}
-                      modifiers={jsonModifiers}
-                    />
-                  )}
-                  <Button
-                    label={saving ? "Saving…" : "Save JSON"}
-                    onPress={() => void handleJsonSave()}
-                    modifiers={[disabled(saving || jsonText === null)]}
-                  />
-                </Section>
+                <TextInput
+                  multiline
+                  spellCheck={false}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={[styles.jsonInput, { color: theme.colors.text, borderColor: mutedLabel(theme) }]}
+                  value={jsonText}
+                  onChangeText={setJsonText}
+                />
               )}
-            </Form>
-        </Host>
+            </ScrollView>
+          )}
+        </View>
       )}
     </>
   );
@@ -390,4 +240,17 @@ export function RoutineEditScreen() {
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   screen: { flex: 1 },
+  controls: { paddingHorizontal: 16 },
+  status: { fontSize: 14, paddingHorizontal: 20 },
+  warnings: { gap: 4, paddingHorizontal: 20 },
+  jsonScroll: { paddingHorizontal: 16, paddingBottom: 40, gap: 12 },
+  jsonInput: {
+    minHeight: 280,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 12,
+    padding: 12,
+    fontFamily: "Menlo",
+    fontSize: 13,
+    textAlignVertical: "top",
+  },
 });

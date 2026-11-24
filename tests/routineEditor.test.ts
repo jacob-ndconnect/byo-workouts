@@ -3,6 +3,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   planRoutineFormSave,
   planRoutineJsonSave,
+  reorderItems,
   type AssembledRoutineDay,
 } from "@/core/logic/routineEditor";
 import type { Exercise } from "@/core/types";
@@ -37,6 +38,14 @@ const activeExercises: Exercise[] = [
     settings_fields: {},
   },
 ];
+
+describe("reorderItems", () => {
+  it("moves an item to a new index", () => {
+    expect(reorderItems(["a", "b", "c"], 0, 2)).toEqual(["b", "c", "a"]);
+    expect(reorderItems(["a", "b", "c"], 2, 0)).toEqual(["c", "a", "b"]);
+    expect(reorderItems(["a", "b", "c"], 1, 1)).toEqual(["a", "b", "c"]);
+  });
+});
 
 describe("planRoutineFormSave", () => {
   it("soft-deletes removed days on form save", () => {

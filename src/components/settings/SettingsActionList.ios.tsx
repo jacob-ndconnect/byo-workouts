@@ -10,6 +10,7 @@ import {
   listSectionSpacing,
   listStyle,
   padding,
+  scrollDismissesKeyboard,
 } from "@expo/ui/swift-ui/modifiers";
 import { type ReactNode } from "react";
 
@@ -17,10 +18,13 @@ import { type ReactNode } from "react";
 export function SettingsActionList({
   children,
   topInset = 0,
+  dismissKeyboardOnScroll = false,
 }: {
   children: ReactNode;
   /** Scroll content starts this far down so it can still draw under the header. */
   topInset?: number;
+  /** Dragging the list dismisses the keyboard. */
+  dismissKeyboardOnScroll?: boolean;
 }) {
   return (
     <Host style={{ flex: 1 }}>
@@ -30,6 +34,7 @@ export function SettingsActionList({
           listSectionSpacing("compact"),
           padding({ top: -SETTINGS_LIST_TRIM_TOP_INSET }),
           ...(topInset > 0 ? [ignoreSafeArea({ edges: "top" as const })] : []),
+          ...(dismissKeyboardOnScroll ? [scrollDismissesKeyboard("interactively")] : []),
           softScrollEdge("all"),
         ]}
       >

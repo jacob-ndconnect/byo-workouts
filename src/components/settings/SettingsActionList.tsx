@@ -7,14 +7,17 @@ import { GroupedListScreen } from "@/components/ui/GroupedList";
 export function SettingsActionList({
   children,
   topInset = 0,
+  dismissKeyboardOnScroll = false,
 }: {
   children: ReactNode;
   topInset?: number;
+  dismissKeyboardOnScroll?: boolean;
 }) {
   return (
     <ScrollView
       style={{ flex: 1 }}
       contentContainerStyle={{ paddingBottom: 96, paddingTop: topInset }}
+      keyboardDismissMode={dismissKeyboardOnScroll ? "interactive" : "none"}
     >
       <GroupedListScreen flush bare>
         {children}
