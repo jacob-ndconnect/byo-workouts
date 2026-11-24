@@ -1,4 +1,5 @@
 import { SettingsActionList } from "@/components/settings/SettingsActionList";
+import { SettingsHeaderControls } from "@/components/settings/SettingsHeaderControls";
 import { SETTINGS_LIST_PICKER_GAP } from "@/components/settings/settingsListLayout";
 import { SettingsActionRow } from "@/components/settings/SettingsActionRow";
 import { SegmentedControl, SegmentFade } from "@/components/settings/SegmentedControl";
@@ -34,6 +35,9 @@ export function ExercisesScreen() {
   const theme = useTheme();
   const router = useRouter();
   const headerHeight = useHeaderHeight();
+  const [chromeHeight, setChromeHeight] = useState(0);
+  const pinned = Platform.OS === "ios";
+  const contentTop = pinned ? headerHeight + chromeHeight + SETTINGS_LIST_PICKER_GAP : 0;
   const [showArchived, setShowArchived] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("gui");
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -138,7 +142,8 @@ export function ExercisesScreen() {
               : [],
         }}
       />
-      <View style={[styles.screen, { paddingTop: headerHeight + 2 }]}>
+      <View style={[styles.screen, pinned ? null : { paddingTop: headerHeight + 2 }]}>
+        <SettingsHeaderControls headerHeight={headerHeight} onHeight={setChromeHeight}>
         <View style={styles.controls}>
           <SegmentedControl
             style={styles.segmentFill}
@@ -168,15 +173,9 @@ export function ExercisesScreen() {
             onChange={switchViewMode}
           />
         </View>
-
-        <SegmentFade
-          paneKey={`${showArchived ? "archived" : "active"}-${viewMode}`}
-          style={styles.pane}
-        >
         {message ? (
           <Text style={[styles.status, { color: mutedLabel(theme) }]}>{message}</Text>
         ) : null}
-
         {warnings.length > 0 ? (
           <View style={styles.warnings}>
             <Text style={{ color: theme.colors.text, fontWeight: "600" }}>Warnings</Text>
@@ -187,16 +186,21 @@ export function ExercisesScreen() {
             ))}
           </View>
         ) : null}
+        </SettingsHeaderControls>
 
+        <SegmentFade
+          paneKey={`${showArchived ? "archived" : "active"}-${viewMode}`}
+          style={styles.pane}
+        >
         {loading && exercises.length === 0 ? (
-          <ActivityIndicator style={styles.loader} />
+          <ActivityIndicator style={[styles.loader, pinned && { marginTop: contentTop }]} />
         ) : viewMode === "gui" ? (
           exercises.length === 0 ? (
-            <Text style={[styles.status, { color: mutedLabel(theme) }]}>
+            <Text style={[styles.status, { color: mutedLabel(theme) }, pinned && { marginTop: contentTop }]}>
               {showArchived ? "No archived exercises." : "No exercises yet."}
             </Text>
           ) : (
-            <SettingsActionList>
+            <SettingsActionList topInset={contentTop}>
               {exercises.map((exercise) => {
                 const type = pwaTypeFromExercise(exercise);
                 const json = toExerciseJson(exercise);
@@ -259,7 +263,11 @@ export function ExercisesScreen() {
         ) : (
           <ScrollView
             style={styles.pane}
-            contentContainerStyle={styles.jsonScroll}
+            contentInsetAdjustmentBehavior="automatic"
+            contentContainerStyle={[
+              styles.jsonScroll,
+              pinned && { paddingTop: chromeHeight + SETTINGS_LIST_PICKER_GAP },
+            ]}
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.jsonBlock}>

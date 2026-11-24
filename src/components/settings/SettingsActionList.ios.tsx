@@ -1,11 +1,27 @@
 import { SETTINGS_LIST_TRIM_TOP_INSET } from "@/components/settings/settingsListLayout";
 import { softScrollEdge } from "@/components/ui/softScrollEdge";
-import { Host, List } from "@expo/ui/swift-ui";
-import { listSectionSpacing, listStyle, padding } from "@expo/ui/swift-ui/modifiers";
+import { Host, List, Section, Spacer } from "@expo/ui/swift-ui";
+import {
+  frame,
+  ignoreSafeArea,
+  listRowBackground,
+  listRowInsets,
+  listRowSeparator,
+  listSectionSpacing,
+  listStyle,
+  padding,
+} from "@expo/ui/swift-ui/modifiers";
 import { type ReactNode } from "react";
 
 /** Native list. Swipe actions only activate on rows inside a SwiftUI `List`. */
-export function SettingsActionList({ children }: { children: ReactNode }) {
+export function SettingsActionList({
+  children,
+  topInset = 0,
+}: {
+  children: ReactNode;
+  /** Scroll content starts this far down so it can still draw under the header. */
+  topInset?: number;
+}) {
   return (
     <Host style={{ flex: 1 }}>
       <List
@@ -13,9 +29,22 @@ export function SettingsActionList({ children }: { children: ReactNode }) {
           listStyle("insetGrouped"),
           listSectionSpacing("compact"),
           padding({ top: -SETTINGS_LIST_TRIM_TOP_INSET }),
+          ...(topInset > 0 ? [ignoreSafeArea({ edges: "top" as const })] : []),
           softScrollEdge("all"),
         ]}
       >
+        {topInset > 0 ? (
+          <Section>
+            <Spacer
+              modifiers={[
+                frame({ height: topInset }),
+                listRowBackground("#00000000"),
+                listRowSeparator("hidden"),
+                listRowInsets({ top: 0, leading: 0, bottom: 0, trailing: 0 }),
+              ]}
+            />
+          </Section>
+        ) : null}
         {children}
       </List>
     </Host>

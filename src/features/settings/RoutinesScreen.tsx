@@ -1,4 +1,5 @@
 import { SettingsActionList } from "@/components/settings/SettingsActionList";
+import { SettingsHeaderControls } from "@/components/settings/SettingsHeaderControls";
 import { SETTINGS_LIST_PICKER_GAP } from "@/components/settings/settingsListLayout";
 import { SettingsActionRow } from "@/components/settings/SettingsActionRow";
 import { SegmentedControl, SegmentFade } from "@/components/settings/SegmentedControl";
@@ -27,6 +28,9 @@ export function RoutinesScreen() {
   const theme = useTheme();
   const router = useRouter();
   const headerHeight = useHeaderHeight();
+  const [chromeHeight, setChromeHeight] = useState(0);
+  const pinned = Platform.OS === "ios";
+  const contentTop = pinned ? headerHeight + chromeHeight + SETTINGS_LIST_PICKER_GAP : 0;
   const [showArchived, setShowArchived] = useState(false);
   const [routines, setRoutines] = useState<RoutineSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +110,8 @@ export function RoutinesScreen() {
                 ],
         }}
       />
-      <View style={[styles.screen, { paddingTop: headerHeight + 2 }]}>
+      <View style={[styles.screen, pinned ? null : { paddingTop: headerHeight + 2 }]}>
+        <SettingsHeaderControls headerHeight={headerHeight} onHeight={setChromeHeight}>
         <View style={styles.controls}>
           <SegmentedControl
             accessibilityLabel="Routine archive filter"
@@ -124,20 +129,20 @@ export function RoutinesScreen() {
             }}
           />
         </View>
-
-        <SegmentFade paneKey={showArchived ? "archived" : "active"} style={styles.pane}>
         {message ? (
           <Text style={[styles.status, { color: theme.colors.notification }]}>{message}</Text>
         ) : null}
+        </SettingsHeaderControls>
 
+        <SegmentFade paneKey={showArchived ? "archived" : "active"} style={styles.pane}>
         {loading && routines.length === 0 ? (
-          <ActivityIndicator style={styles.loader} />
+          <ActivityIndicator style={[styles.loader, pinned && { marginTop: contentTop }]} />
         ) : routines.length === 0 ? (
-          <Text style={[styles.status, { color: mutedLabel(theme) }]}>
+          <Text style={[styles.status, { color: mutedLabel(theme) }, pinned && { marginTop: contentTop }]}>
             {showArchived ? "No archived routines." : "No routines yet."}
           </Text>
         ) : (
-          <SettingsActionList>
+          <SettingsActionList topInset={contentTop}>
             {routines.map((routine) => {
               const onEdit = () => router.push(`/settings/routines/${routine.id}`);
               const onArchive = () => void handleArchive(routine.id);
