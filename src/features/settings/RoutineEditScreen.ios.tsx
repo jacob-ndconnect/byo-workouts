@@ -1,4 +1,5 @@
 import { FormTextField } from "@/components/settings/FormTextField";
+import { softScrollEdge } from "@/components/ui/softScrollEdge";
 import {
   defaultDayName,
   moveItem,
@@ -194,7 +195,7 @@ export function RoutineEditScreen() {
         </View>
       ) : (
         <Host style={styles.screen} useViewportSizeMeasurement>
-          <Form>
+          <Form modifiers={[softScrollEdge("all")]}>
               <Section>
                 <Picker
                   selection={viewMode}

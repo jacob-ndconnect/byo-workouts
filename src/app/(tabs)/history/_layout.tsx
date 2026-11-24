@@ -14,7 +14,7 @@ const formSheet = {
 
 export default function HistoryLayout() {
   return (
-    <Stack>
+    <Stack screenOptions={{ scrollEdgeEffects: { top: "soft" } }}>
       <Stack.Screen name="index" options={{ headerLargeTitle: true, title: "History" }} />
       <Stack.Screen name="edit" options={{ ...formSheet, title: "Edit" }} />
     </Stack>

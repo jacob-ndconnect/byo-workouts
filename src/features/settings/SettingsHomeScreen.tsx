@@ -1,3 +1,4 @@
+import { SETTINGS_HOME_ICON_SLOT_WIDTH } from "@/components/settings/settingsListLayout";
 import { GroupedListScreen } from "@/components/ui/GroupedList";
 import { mutedLabel } from "@/constants/themeColors";
 import { brandPrimary } from "@/constants/brandColors";
@@ -26,7 +27,9 @@ function SettingsHomeRow({ item }: { item: SettingsMenuItem }) {
       accessibilityRole="button"
     >
       <View style={styles.rowContent}>
-        <SymbolView name={item.systemImage} size={20} tintColor={accent} />
+        <View style={styles.iconSlot}>
+          <SymbolView name={item.systemImage} size={20} tintColor={accent} />
+        </View>
         <Text style={[styles.label, { color: theme.colors.text }]}>{item.label}</Text>
         <SymbolView name="chevron.right" size={14} weight="semibold" tintColor={secondary} />
       </View>
@@ -76,6 +79,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+  },
+  iconSlot: {
+    width: SETTINGS_HOME_ICON_SLOT_WIDTH,
+    alignItems: "center",
   },
   label: {
     flex: 1,

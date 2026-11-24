@@ -1,4 +1,5 @@
 import { FormTextField } from "@/components/settings/FormTextField";
+import { softScrollEdge } from "@/components/ui/softScrollEdge";
 import {
   CARDIO_LOGGED_FIELDS,
   MACHINE_LOGGED_FIELDS,
@@ -292,7 +293,7 @@ export function ExerciseFormScreen() {
           ]}
         >
           <Host style={styles.form} useViewportSizeMeasurement>
-            <Form>
+            <Form modifiers={[softScrollEdge("top")]}>
               {error ? (
                 <Section>
                   <Text modifiers={[foregroundStyle("#FF3B30")]}>{error}</Text>

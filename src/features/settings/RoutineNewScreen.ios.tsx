@@ -1,4 +1,5 @@
 import { FormTextField } from "@/components/settings/FormTextField";
+import { softScrollEdge } from "@/components/ui/softScrollEdge";
 import { openRepository } from "@/data/openRepository";
 import { markRoutinesDirty } from "@/features/settings/libraryDirty";
 import { createRoutine } from "@/features/settings/settingsRoutines";
@@ -70,7 +71,7 @@ export function RoutineNewScreen() {
         ]}
       >
         <Host style={styles.form} useViewportSizeMeasurement>
-          <Form>
+          <Form modifiers={[softScrollEdge("top")]}>
             {error ? (
               <Section>
                 <Text modifiers={[foregroundStyle("#FF3B30")]}>{error}</Text>

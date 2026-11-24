@@ -1,7 +1,9 @@
-import { Button, Host, HStack, Image, List, Section, Spacer, Text } from "@expo/ui/swift-ui";
-import { listStyle, tint } from "@expo/ui/swift-ui/modifiers";
+import { SETTINGS_HOME_ICON_SLOT_WIDTH } from "@/components/settings/settingsListLayout";
+import { softScrollEdge } from "@/components/ui/softScrollEdge";
 import { brandPrimary } from "@/constants/brandColors";
 import { settingsMenuSections, type SettingsMenuItem } from "@/features/settings/categories";
+import { Button, Host, HStack, Image, List, Section, Spacer, Text } from "@expo/ui/swift-ui";
+import { frame, listStyle, tint } from "@expo/ui/swift-ui/modifiers";
 import { Stack, useRouter } from "expo-router";
 import { StyleSheet, useColorScheme, View } from "react-native";
 
@@ -15,7 +17,18 @@ function SettingsHomeRow({ item }: { item: SettingsMenuItem }) {
       modifiers={[tint({ type: "hierarchical", style: "primary" })]}
     >
       <HStack spacing={12}>
-        <Image systemName={item.systemImage} size={20} color={accent} />
+        <Image
+          systemName={item.systemImage}
+          size={20}
+          color={accent}
+          modifiers={[
+            frame({
+              width: SETTINGS_HOME_ICON_SLOT_WIDTH,
+              height: SETTINGS_HOME_ICON_SLOT_WIDTH,
+              alignment: "center",
+            }),
+          ]}
+        />
         <Text>{item.label}</Text>
         <Spacer />
         <Image systemName="chevron.right" size={13} color="#8E8E93" />
@@ -32,7 +45,7 @@ export function SettingsHomeScreen() {
       <Stack.Title large>Settings</Stack.Title>
       <View style={styles.screen}>
         <Host style={styles.host}>
-          <List modifiers={[listStyle("insetGrouped")]}>
+          <List modifiers={[listStyle("insetGrouped"), softScrollEdge("all")]}>
             {sections.map((section) => (
               <Section key={section.id}>
                 {section.items.map((item) => (

@@ -7,10 +7,6 @@ const formSheet = {
   sheetAllowedDetents: "fitToContents" as const,
   headerShadowVisible: false,
   headerLargeTitleEnabled: false,
-  scrollEdgeEffects: {
-    top: "soft" as const,
-    bottom: "hidden" as const,
-  },
 };
 
 const softHeader = {
@@ -18,15 +14,17 @@ const softHeader = {
   headerShadowVisible: false,
   headerTransparent: true,
   headerLargeTitleEnabled: false,
-  scrollEdgeEffects: {
-    top: "soft" as const,
-    bottom: "hidden" as const,
-  },
 };
 
 export default function WorkoutDayLayout() {
   return (
-    <Stack screenOptions={{ headerBackButtonDisplayMode: "minimal" }}>
+    <Stack
+      screenOptions={{
+        headerBackButtonDisplayMode: "minimal",
+        // Bottom stays hidden so the session footer and sheets do not pick up a second edge.
+        scrollEdgeEffects: { top: "soft", bottom: "hidden" },
+      }}
+    >
       <Stack.Screen name="index" options={softHeader} />
       <Stack.Screen name="exercise/[exerciseId]" options={softHeader} />
       <Stack.Screen name="log" options={{ ...formSheet, title: "Log" }} />

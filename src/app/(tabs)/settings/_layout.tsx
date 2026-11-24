@@ -10,7 +10,12 @@ const formSheet = {
 
 export default function SettingsLayout() {
   return (
-    <Stack screenOptions={{ headerBackButtonDisplayMode: "minimal" }}>
+    <Stack
+      screenOptions={{
+        headerBackButtonDisplayMode: "minimal",
+        scrollEdgeEffects: { top: "soft" },
+      }}
+    >
       <Stack.Screen name="index" options={{ headerLargeTitle: true, title: "Settings" }} />
       <Stack.Screen name="exercises" options={{ title: "Exercises" }} />
       <Stack.Screen

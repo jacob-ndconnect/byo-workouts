@@ -1,4 +1,5 @@
 import { SETTINGS_LIST_TRIM_TOP_INSET } from "@/components/settings/settingsListLayout";
+import { softScrollEdge } from "@/components/ui/softScrollEdge";
 import { Host, List } from "@expo/ui/swift-ui";
 import { listSectionSpacing, listStyle, padding } from "@expo/ui/swift-ui/modifiers";
 import { type ReactNode } from "react";
@@ -12,6 +13,7 @@ export function SettingsActionList({ children }: { children: ReactNode }) {
           listStyle("insetGrouped"),
           listSectionSpacing("compact"),
           padding({ top: -SETTINGS_LIST_TRIM_TOP_INSET }),
+          softScrollEdge("all"),
         ]}
       >
         {children}

@@ -1,3 +1,4 @@
+import { softScrollEdge } from "@/components/ui/softScrollEdge";
 import type { HistoryEntry } from "@/features/history/historyData";
 import { Host, List } from "@expo/ui/swift-ui";
 import { listStyle } from "@expo/ui/swift-ui/modifiers";
@@ -27,7 +28,7 @@ export function HistoryList({ entries, onEdit, onDelete }: HistoryListProps) {
 
   return (
     <Host style={{ flex: 1 }}>
-      <List modifiers={[listStyle("insetGrouped")]}>
+      <List modifiers={[listStyle("insetGrouped"), softScrollEdge("all")]}>
         <List.ForEach data={entries} keyExtractor={keyExtractor} estimatedItemSize={68}>
           {renderRow}
         </List.ForEach>
